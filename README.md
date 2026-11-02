@@ -8,6 +8,44 @@ A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblo
 
 ---
 
+## Video Showcase
+
+[![Watch the Demo on YouTube](https://img.youtube.com/vi/V2zM7D6ncGg/maxresdefault.jpg)](https://youtu.be/V2zM7D6ncGg)
+
+*Click the thumbnail above or watch directly on YouTube: **[https://youtu.be/V2zM7D6ncGg](https://youtu.be/V2zM7D6ncGg)***
+
+---
+
+## Interface & Screenshots
+
+### Main Page (Dashboard & Logs)
+Tracks live runtime, cycle counts, perfect dig accuracy, cash balance/hourly rate, and color-coded event logs.
+
+![Main Page - Dashboard & Logs](assets/main.png)
+
+### Movement Page
+Configures shoreline navigation (`Vision`, `Mirror`, or `Fixed`) and `W`/`S` walk durations with drift trim adjustments.
+
+![Movement Page](assets/movement.png)
+
+### Dig & Pan Settings
+Controls spade hold-and-release timing, scoop cooldowns, fallback dig limits, and pan wash timeouts.
+
+![Dig & Pan Settings](assets/dig_pan.png)
+
+### Auto-Sell Settings
+Configures periodic backpack selling, camera zoom scroll notches, and a 3-second interactive Sell coordinate picker.
+
+![Auto-Sell Settings](assets/autosell.png)
+
+### Webhook Settings
+Sends periodic, non-spammy session summary embeds to Discord with runtime, cycles, perfect dig rate, and cash progression.
+
+![Webhook Settings](assets/webhook.png)
+![Discord Webhook Summary Embed](assets/webhook_embed.png)
+
+---
+
 ## Game Policy & Safety
 
 * **Macro Compliance:** Macros are permitted by the developers of *Prospecting!*.
