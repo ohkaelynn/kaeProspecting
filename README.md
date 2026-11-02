@@ -19,7 +19,7 @@ It reads on-screen prompts to automatically walk between digging and panning, tr
 ## Screen & System Setup
 
 * **Primary Screen:** Roblox must be running on your main monitor.
-* **Resolution:** Designed for **`2560x1440` (Windowed / Borderless)**.
+* **Resolution:** Designed for **`2560x1440` (Windowed)**.
   * *Note:* At other resolutions like `1920x1080`, screen detection zones may need small tweaks.
 * **OS:** Windows 10 or 11 (64-bit).
 
@@ -64,13 +64,13 @@ It reads on-screen prompts to automatically walk between digging and panning, tr
    ```bash
    pip install opencv-python mss numpy
    ```
-3. *(Optional, for reading cash balance via OCR and fallbacks)* Install [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) for Windows and the Python wrapper:
+3. *(Optional, for fallbacks and reading cash balance via OCR)* Install [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) for Windows and the Python wrapper:
    ```bash
    pip install pytesseract
    ```
 4. **In Roblox:**
-   - Set the game to **Windowed mode** on your primary monitor (`2560x1440`).
-   - Equip your shovel and pan, and stand near the water's edge facing the lake.
+   - Maximized window on your primary monitor (`2560x1440`).
+   - Equip your pan, and stand near the water's edge facing the lake.
 5. **Launch:**
    ```bash
    python kaeProspect.py
