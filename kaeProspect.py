@@ -1597,7 +1597,7 @@ class ProspectingGUI:
 
         tk.Label(
             hdr,
-            text="Roblox Proespecting! Macro, Auto-Pan, Auto-Spade, Auto-Sell",
+            text="Roblox Prospecting! Macro, Auto-Pan, Auto-Spade, Auto-Sell",
             font=("Segoe UI", 8),
             bg=self.BG_DARK,
             fg=self.FG_MUTED,
