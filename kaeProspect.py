@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-kaeProspect — Prospecting! Automation Macro 1.0.0
+kaeProspect — Prospecting! Automation Macro 1.1.0
 ===========================================
 Authors : kaelynn & Antigravity (Gemini 4 Argon)
 License : Public Community Release
@@ -28,7 +28,7 @@ import mss
 import numpy as np
 
 __author__ = "kaelynn & Antigravity (Gemini 4 Argon)"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 try:
     import pytesseract
@@ -68,6 +68,26 @@ CONFIG_FILE = "prospecting_settings.json"
 LOG_QUEUE = queue.Queue()
 ROI_SCHEMA_VERSION = 8
 
+PRESET_BOUNDS_1440P_100 = {
+    "roi_dig_target":  [0.5918, 0.4227, 0.6078, 0.4474],
+    "roi_pan_full":    [0.6020, 0.7778, 0.6247, 0.8141],
+    "roi_pan_empty":   [0.3754, 0.7778, 0.3977, 0.8141],
+    "roi_prompt":      [0.4352, 0.8751, 0.5653, 0.9085],
+    "roi_alert":       [0.3805, 0.6747, 0.6200, 0.7081],
+    "roi_money":       [0.8559, 0.9390, 0.9981, 0.9833],
+    "roi_sell_target": [0.4461, 0.6848, 0.4961, 0.7204],
+}
+
+PRESET_BOUNDS_1440P_150 = {
+    "roi_dig_target":  [0.5880, 0.4360, 0.6080, 0.4600],
+    "roi_pan_full":    [0.5920, 0.7560, 0.6230, 0.7880],
+    "roi_pan_empty":   [0.3770, 0.7560, 0.4120, 0.7880],
+    "roi_prompt":      [0.4350, 0.8500, 0.5650, 0.8840],
+    "roi_alert":       [0.3800, 0.6580, 0.6200, 0.6920],
+    "roi_money":       [0.8850, 0.9350, 0.9950, 0.9800],
+    "roi_sell_target": [0.4047, 0.5295, 0.4547, 0.5655],
+}
+
 DEFAULT_CONFIG = {
     "roi_version": ROI_SCHEMA_VERSION,
     "movement_mode": "Vision",
@@ -81,19 +101,18 @@ DEFAULT_CONFIG = {
     "wash_timeout": 15.0,
     "autosell_enabled": True,
     "autosell_cycles": 5,
-    "sell_coords": [[0.4297, 0.5475]],
+    "sell_coords": [[0.4711, 0.7026]],
     "scroll_out_notches": 1,
     "scroll_in_notches": 1,
     "always_on_top": False,
     "webhook_enabled": False,
     "webhook_url": "",
     "webhook_interval_min": 5,
-    "roi_dig_target": [0.588, 0.436, 0.608, 0.460],
-    "roi_pan_full":   [0.592, 0.756, 0.623, 0.788],
-    "roi_pan_empty":  [0.377, 0.756, 0.412, 0.788],
-    "roi_prompt":     [0.435, 0.850, 0.565, 0.884],
-    "roi_alert":      [0.380, 0.658, 0.620, 0.692],
-    "roi_money":      [0.885, 0.935, 0.995, 0.980],
+    **PRESET_BOUNDS_1440P_100,
+    "hotkey_start": "F1",
+    "hotkey_pause": "F2",
+    "hotkey_stop": "F3",
+    "hotkey_test_bounds": "F4",
 }
 
 
@@ -237,6 +256,15 @@ def load_config() -> dict:
             saved = json.loads(sanitized)
             old_roi_ver = saved.get("roi_version", 1)
             cfg.update(saved)
+            if "roi_sell_target" not in saved and "sell_coords" in saved and saved["sell_coords"]:
+                pt = saved["sell_coords"][0]
+                sx, sy = float(pt[0]), float(pt[1])
+                cfg["roi_sell_target"] = [
+                    round(max(0.0, sx - 0.025), 4),
+                    round(max(0.0, sy - 0.018), 4),
+                    round(min(1.0, sx + 0.025), 4),
+                    round(min(1.0, sy + 0.018), 4),
+                ]
             if old_roi_ver < ROI_SCHEMA_VERSION:
                 for k in (
                     "roi_version",
@@ -372,7 +400,7 @@ class DiscordWebhookReporter:
                     data=payload,
                     headers={
                         "Content-Type": "application/json",
-                        "User-Agent": "kaeProspectMacro/1.0",
+                        "User-Agent": "kaeProspectMacro/1.1",
                     },
                     method="POST",
                 )
@@ -448,12 +476,25 @@ SC_W = 0x11
 SC_S = 0x1F
 SC_TILDE = 0x29
 
-VK_F1 = 0x70
-VK_F2 = 0x71
-VK_F3 = 0x72
-VK_F4 = 0x73
-VK_F5 = 0x74
-VK_F6 = 0x75
+VK_MAP = {
+    "F1": 0x70, "F2": 0x71, "F3": 0x72, "F4": 0x73,
+    "F5": 0x74, "F6": 0x75, "F7": 0x76, "F8": 0x77,
+    "F9": 0x78, "F10": 0x79, "F11": 0x7A, "F12": 0x7B,
+    "INSERT": 0x2D, "DELETE": 0x2E, "HOME": 0x24, "END": 0x23,
+    "PGUP": 0x21, "PGDN": 0x22, "PAUSE": 0x13,
+    "0": 0x30, "1": 0x31, "2": 0x32, "3": 0x33, "4": 0x34,
+    "5": 0x35, "6": 0x36, "7": 0x37, "8": 0x38, "9": 0x39,
+    "A": 0x41, "B": 0x42, "C": 0x43, "D": 0x44, "E": 0x45,
+    "F": 0x46, "G": 0x47, "H": 0x48, "I": 0x49, "J": 0x4A,
+    "K": 0x4B, "L": 0x4C, "M": 0x4D, "N": 0x4E, "O": 0x4F,
+    "P": 0x50, "Q": 0x51, "R": 0x52, "S": 0x53, "T": 0x54,
+    "U": 0x55, "V": 0x56, "W": 0x57, "X": 0x58, "Y": 0x59,
+    "Z": 0x5A, "NONE": 0,
+}
+HOTKEY_CHOICES = [
+    "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+    "INSERT", "DELETE", "HOME", "END", "PGUP", "PGDN", "PAUSE", "NONE",
+]
 
 KEYEVENTF_SCANCODE = 0x0008
 KEYEVENTF_KEYUP = 0x0002
@@ -635,8 +676,23 @@ class RobloxClientVision:
         return np.frombuffer(raw.raw, dtype=np.uint8).reshape(raw.height, raw.width, 4)
 
     def check_dig_slider_hit(self) -> bool:
-        """Detects the moving white marker bar within the digging minigame target zone."""
-        crop = self.grab_roi(CONFIG.get("roi_dig_target", DEFAULT_CONFIG["roi_dig_target"]))
+        """
+        Detects the moving white spade marker bar entering the digging minigame target zone.
+        Applies a small downward lead-time extension below the user-drawn green target box and
+        ensures enough horizontal width to capture the bright white shovel handle/blade so LMB
+        releases in time to stop inside the green zone on the very first upward sweep.
+        """
+        rx1, ry1, rx2, ry2 = CONFIG.get("roi_dig_target", DEFAULT_CONFIG["roi_dig_target"])
+        mid_x = (rx1 + rx2) * 0.5
+        half_w = max(0.011, (rx2 - rx1) * 0.5)
+        box_h = max(0.015, ry2 - ry1)
+        lead_ratios = (
+            max(0.0, mid_x - half_w),
+            max(0.0, ry1 + box_h * 0.35),
+            min(1.0, mid_x + half_w),
+            min(1.0, ry2 + max(0.011, box_h * 0.45)),
+        )
+        crop = self.grab_roi(lead_ratios)
         if crop.size == 0:
             return False
 
@@ -645,11 +701,11 @@ class RobloxClientVision:
         r = crop[:, :, 2]
 
         white_mask = (
-            (r >= 210) & (g >= 210) & (b >= 200) &
-            (np.abs(r.astype(np.int16) - b.astype(np.int16)) <= 35)
+            (r >= 195) & (g >= 195) & (b >= 185) &
+            (np.abs(r.astype(np.int16) - b.astype(np.int16)) <= 45)
         )
         row_counts = np.sum(white_mask, axis=1)
-        min_bar_width = max(4, int(crop.shape[1] * 0.06))
+        min_bar_width = max(3, int(crop.shape[1] * 0.05))
         return bool(np.any(row_counts >= min_bar_width))
 
     def is_pan_full(self) -> bool:
@@ -782,6 +838,46 @@ class RobloxClientVision:
 
         threading.Thread(target=_worker, daemon=True).start()
 
+    def evaluate_region(self, key: str, move_to_sell: bool = False) -> str:
+        """Evaluates a single region or sell target box against the current Roblox frame and returns a status summary."""
+        if not self.find_roblox():
+            return f"[{key}] Error: Roblox window not found."
+        cx, cy, cw, ch = self.update_client_rect()
+
+        ratios = CONFIG.get(key, DEFAULT_CONFIG.get(key, [0.4, 0.4, 0.5, 0.5]))
+        crop = self.grab_roi(ratios)
+        h_px, w_px = crop.shape[:2] if crop.size else (0, 0)
+
+        if key in ("roi_sell_target", "sell_target"):
+            rx1, ry1, rx2, ry2 = CONFIG.get("roi_sell_target", DEFAULT_CONFIG["roi_sell_target"])
+            rx, ry = (float(rx1) + float(rx2)) * 0.5, (float(ry1) + float(ry2)) * 0.5
+            tx, ty = cx + int(cw * rx), cy + int(ch * ry)
+            if move_to_sell:
+                move_mouse_abs(tx, ty)
+            return f"Sell Target ({w_px}x{h_px}px) -> Middle ({rx:.4f}, {ry:.4f}) | Screen ({tx}, {ty})"
+
+        if key == "roi_dig_target":
+            hit = self.check_dig_slider_hit()
+            return f"Dig Target ({w_px}x{h_px}px) -> Slider Hit: {hit}"
+        if key == "roi_pan_full":
+            full = self.is_pan_full()
+            return f"Pan Full ({w_px}x{h_px}px) -> Full Detected: {full}"
+        if key == "roi_pan_empty":
+            empty = self.is_pan_empty()
+            return f"Pan Empty ({w_px}x{h_px}px) -> Empty Detected: {empty}"
+        if key == "roi_prompt":
+            state = self.get_prompt_state()
+            return f"Prompt ({w_px}x{h_px}px) -> State: {state}"
+        if key == "roi_alert":
+            alert = self.get_alert_banner_state()
+            return f"Alert OCR ({w_px}x{h_px}px) -> State: {alert}"
+        if key == "roi_money":
+            if not HAS_TESSERACT:
+                return f"Money OCR ({w_px}x{h_px}px) -> pytesseract not installed"
+            self.poll_money_async(force=True)
+            return f"Money OCR ({w_px}x{h_px}px) -> Balance: {STATS.get_current_money_str()} (polling)"
+        return f"{key} ({w_px}x{h_px}px)"
+
     def save_debug_snapshot(self):
         if not self.find_roblox():
             log_event("[Debug] Roblox window not found for snapshot.")
@@ -792,27 +888,26 @@ class RobloxClientVision:
         bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
         rois = [
-            ("DIG_TARGET", CONFIG.get("roi_dig_target", DEFAULT_CONFIG["roi_dig_target"]), (0, 255, 0)),
-            ("PAN_FULL",   CONFIG.get("roi_pan_full", DEFAULT_CONFIG["roi_pan_full"]),     (0, 255, 255)),
-            ("PAN_EMPTY",  CONFIG.get("roi_pan_empty", DEFAULT_CONFIG["roi_pan_empty"]),   (255, 255, 0)),
-            ("PROMPT",     CONFIG.get("roi_prompt", DEFAULT_CONFIG["roi_prompt"]),         (255, 0, 255)),
-            ("ALERT_OCR",  CONFIG.get("roi_alert", DEFAULT_CONFIG["roi_alert"]),           (80, 80, 255)),
-            ("MONEY_OCR",  CONFIG.get("roi_money", DEFAULT_CONFIG["roi_money"]),           (0, 215, 255)),
+            ("DIG_TARGET",  CONFIG.get("roi_dig_target", DEFAULT_CONFIG["roi_dig_target"]),   (0, 255, 0)),
+            ("PAN_FULL",    CONFIG.get("roi_pan_full", DEFAULT_CONFIG["roi_pan_full"]),       (0, 255, 255)),
+            ("PAN_EMPTY",   CONFIG.get("roi_pan_empty", DEFAULT_CONFIG["roi_pan_empty"]),     (255, 255, 0)),
+            ("PROMPT",      CONFIG.get("roi_prompt", DEFAULT_CONFIG["roi_prompt"]),           (255, 0, 255)),
+            ("ALERT_OCR",   CONFIG.get("roi_alert", DEFAULT_CONFIG["roi_alert"]),             (80, 80, 255)),
+            ("MONEY_OCR",   CONFIG.get("roi_money", DEFAULT_CONFIG["roi_money"]),             (0, 215, 255)),
+            ("SELL_TARGET", CONFIG.get("roi_sell_target", DEFAULT_CONFIG["roi_sell_target"]), (60, 60, 255)),
         ]
         for name, (rx1, ry1, rx2, ry2), color in rois:
             p1 = (int(cw * rx1), int(ch * ry1))
             p2 = (int(cw * rx2), int(ch * ry2))
             cv2.rectangle(bgr, p1, p2, color, 2)
             cv2.putText(bgr, name, (p1[0], max(16, p1[1] - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.52, color, 2)
-
-        for idx, pt in enumerate(CONFIG.get("sell_coords", []), start=1):
-            sx, sy = int(cw * float(pt[0])), int(ch * float(pt[1]))
-            cv2.circle(bgr, (sx, sy), 8, (0, 0, 255), -1)
-            cv2.putText(bgr, f"SELL #{idx}", (sx + 10, sy + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            if name == "SELL_TARGET":
+                mx, my = (p1[0] + p2[0]) // 2, (p1[1] + p2[1]) // 2
+                cv2.circle(bgr, (mx, my), 5, color, -1)
 
         out_path = os.path.abspath("debug_vision.png")
         cv2.imwrite(out_path, bgr)
-        log_event(f"[Debug F4] Saved calibrated ROI overlay to: {out_path}")
+        log_event(f"[Bounds] Saved calibrated ROI overlay to: {out_path}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1150,7 +1245,8 @@ class ProspectingMacro:
                             if self.vision.check_dig_slider_hit():
                                 hit_perfect = True
                                 break
-                        precise_sleep(0.001)
+                        else:
+                            precise_sleep(0.001)
                 finally:
                     mouse_up()
 
@@ -1215,20 +1311,18 @@ class ProspectingMacro:
         press_key(SC_TILDE, hold=0.06)
         time.sleep(0.40)
 
-        sell_coords = CONFIG.get("sell_coords", [[0.4297, 0.5475]])
-        for idx, pt in enumerate(sell_coords, start=1):
-            if not standalone_test and (not self.running or self.paused):
-                break
-            rx, ry = float(pt[0]), float(pt[1])
-            target_x = cx + int(cw * rx)
-            target_y = cy + int(ch * ry)
-            log_event(f"[Auto-Sell] Clicking Point #{idx} ({rx:.4f}, {ry:.4f})...")
-            move_mouse_abs(target_x, target_y)
-            time.sleep(0.10)
-            click(hold=0.04)
-            time.sleep(0.12)
-            click(hold=0.04)
-            time.sleep(0.20)
+        rx1, ry1, rx2, ry2 = CONFIG.get("roi_sell_target", DEFAULT_CONFIG["roi_sell_target"])
+        rx = (float(rx1) + float(rx2)) * 0.5
+        ry = (float(ry1) + float(ry2)) * 0.5
+        target_x = cx + int(cw * rx)
+        target_y = cy + int(ch * ry)
+        log_event(f"[Auto-Sell] Clicking Sell Target middle ({rx:.4f}, {ry:.4f})...")
+        move_mouse_abs(target_x, target_y)
+        time.sleep(0.10)
+        click(hold=0.04)
+        time.sleep(0.12)
+        click(hold=0.04)
+        time.sleep(0.20)
 
         time.sleep(0.30)
         press_key(SC_TILDE, hold=0.06)
@@ -1309,7 +1403,7 @@ class ProspectingGUI:
         self.gui_start_time = time.perf_counter()
         self._tooltips = []
 
-        self.root.title("kaeProspect — Prospecting! Macro v1.0")
+        self.root.title("kaeProspect — Prospecting! Macro v1.1")
         self.root.resizable(True, True)
         self.root.configure(bg=self.BG_DARK)
 
@@ -1529,18 +1623,25 @@ class ProspectingGUI:
         self.tab_dig = ttk.Frame(self.notebook)
         self.tab_sell = ttk.Frame(self.notebook)
         self.tab_webhook = ttk.Frame(self.notebook)
+        self.tab_bounds = ttk.Frame(self.notebook)
 
         self.notebook.add(self.tab_info, text="   Dashboard & Logs   ")
         self.notebook.add(self.tab_move, text="   Movement   ")
         self.notebook.add(self.tab_dig, text="   Dig & Pan   ")
         self.notebook.add(self.tab_sell, text="   Auto-Sell   ")
         self.notebook.add(self.tab_webhook, text="   Webhook   ")
+        self.notebook.add(self.tab_bounds, text="   Bounds & Keys   ")
+
+        self._overlay_win = None
+        self._binding_target_var = None
 
         self._init_info_tab()
         self._init_move_tab()
         self._init_dig_tab()
         self._init_sell_tab()
         self._init_webhook_tab()
+        self._init_bounds_tab()
+        self._refresh_hotkey_labels()
 
     def _init_info_tab(self):
         top_frame = ttk.Frame(self.tab_info, padding=(10, 10, 10, 8))
@@ -1706,7 +1807,7 @@ class ProspectingGUI:
         ).grid(row=3, column=2, sticky="w")
 
         btn_test = ttk.Button(
-            frame, text="Test W/S Walk Parity (F6)", style="Accent.TButton", command=self.on_test_walk
+            frame, text="Test W/S Walk Parity", style="Accent.TButton", command=self.on_test_walk
         )
         btn_test.pack(anchor="w", pady=(14, 0))
 
@@ -1757,9 +1858,9 @@ class ProspectingGUI:
 
         btn_snap = ttk.Button(
             frame,
-            text="Save Vision ROI Snapshot (F4)",
+            text="Test All Bounds & Save Snapshot",
             style="Accent.TButton",
-            command=self.macro.vision.save_debug_snapshot,
+            command=self.test_all_bounds,
         )
         btn_snap.pack(anchor="w", pady=(14, 0))
 
@@ -1797,30 +1898,655 @@ class ProspectingGUI:
             row=2, column=2, sticky="w"
         )
 
-        coords = CONFIG.get("sell_coords", [[0.4297, 0.5475]])
-        first_pt = coords[0] if coords else [0.4297, 0.5475]
-        ttk.Label(grp, text="Sell Button Ratio (X, Y):").grid(row=3, column=0, sticky="w", pady=6)
-        pt_frame = ttk.Frame(grp, style="Card.TFrame")
-        pt_frame.grid(row=3, column=1, columnspan=2, sticky="w", padx=12, pady=6)
-        self.var_sell_x = tk.StringVar(value=f"{float(first_pt[0]):.4f}")
-        self.var_sell_y = tk.StringVar(value=f"{float(first_pt[1]):.4f}")
-        ttk.Entry(pt_frame, textvariable=self.var_sell_x, width=9).pack(side="left")
-        ttk.Label(pt_frame, text=" , ").pack(side="left")
-        ttk.Entry(pt_frame, textvariable=self.var_sell_y, width=9).pack(side="left")
+        ttk.Label(grp, text="Sell Target Coordinate:").grid(row=3, column=0, sticky="w", pady=6)
+        ttk.Label(
+            grp,
+            text="Configured in the Bounds & Keys tab (with 3s Picker & Live Test)",
+            style="Muted.TLabel",
+        ).grid(row=3, column=1, columnspan=2, sticky="w", padx=12, pady=6)
 
         btn_row = ttk.Frame(frame)
         btn_row.pack(fill="x", pady=(14, 0))
-        ttk.Button(btn_row, text="Pick Sell Coord (3s Delay)", command=self.pick_sell_coord).pack(
-            side="left", padx=(0, 8)
-        )
         ttk.Button(
             btn_row,
-            text="Test Auto-Sell (F5)",
+            text="Open Bounds & Keys Tab",
+            command=lambda: self.notebook.select(self.tab_bounds),
+        ).pack(side="left", padx=(0, 8))
+        ttk.Button(
+            btn_row,
+            text="Test Auto-Sell Sequence",
             style="Accent.TButton",
             command=lambda: threading.Thread(
                 target=self.macro.auto_sell, kwargs={"standalone_test": True}, daemon=True
             ).start(),
         ).pack(side="left")
+
+    def _init_bounds_tab(self):
+        frame = ttk.Frame(self.tab_bounds, padding=10)
+        frame.pack(fill="both", expand=True)
+
+        grp = ttk.LabelFrame(
+            frame,
+            text=" Vision Region & Sell Bounds (Normalized Client Ratios 0.0000 – 1.0000) ",
+            padding=(10, 8),
+        )
+        grp.pack(fill="x")
+        grp.grid_columnconfigure(7, weight=1)
+
+        ttk.Label(
+            grp,
+            text=(
+                "Defaults calibrated at 2560x1440 (100% Windows scale; 150% preset also available). "
+                "Edit X/Y/Height/Length, click Drag to draw interactively, or click Test."
+            ),
+            style="Muted.TLabel",
+        ).grid(row=0, column=0, columnspan=8, sticky="w", pady=(0, 6))
+
+        headers = ["Region", "X (Left)", "Y (Top)", "Height (H)", "Length (W)", "Interactive", "Test", "Target Element"]
+        for col_idx, text in enumerate(headers):
+            ttk.Label(
+                grp,
+                text=text,
+                font=("Segoe UI", 8, "bold"),
+                foreground=self.ACCENT_PINK if col_idx == 0 else self.FG_MAIN,
+            ).grid(row=1, column=col_idx, sticky="w", padx=(0 if col_idx == 0 else 6, 4), pady=(0, 3))
+
+        self.roi_defs = [
+            ("roi_dig_target",  "Dig Target",  "#00ff00", "Spade minigame green target bar zone"),
+            ("roi_pan_full",    "Pan Full",    "#ffff00", "Right cap of yellow Pan Fill bar"),
+            ("roi_pan_empty",   "Pan Empty",   "#00ffff", "Left start of yellow Pan Fill bar"),
+            ("roi_prompt",      "Prompt",      "#ff00ff", "Bottom interaction text (Collect / Pan)"),
+            ("roi_alert",       "Alert OCR",   "#ff5050", "Red warning banner above Pan Fill bar"),
+            ("roi_money",       "Money OCR",   "#ffd700", "Bottom-right cash counter"),
+            ("roi_sell_target", "Sell Target", "#ff3b3b", "Backpack Sell button box (clicks middle)"),
+        ]
+        self.roi_vars = {}
+
+        for row_idx, (key, label_text, hex_clr, desc) in enumerate(self.roi_defs, start=2):
+            rx1, ry1, rx2, ry2 = CONFIG.get(key, DEFAULT_CONFIG[key])
+            x_val = float(rx1)
+            y_val = float(ry1)
+            h_val = max(0.001, float(ry2) - float(ry1))
+            l_val = max(0.001, float(rx2) - float(rx1))
+
+            lbl_frame = ttk.Frame(grp, style="Card.TFrame")
+            lbl_frame.grid(row=row_idx, column=0, sticky="w", pady=2)
+            tk.Label(
+                lbl_frame,
+                text="■",
+                fg=hex_clr,
+                bg=self.BG_CARD,
+                font=("Segoe UI", 10, "bold"),
+            ).pack(side="left", padx=(0, 4))
+            ttk.Label(lbl_frame, text=label_text, font=("Segoe UI", 9, "bold")).pack(side="left")
+
+            vx = tk.StringVar(value=f"{x_val:.4f}")
+            vy = tk.StringVar(value=f"{y_val:.4f}")
+            vh = tk.StringVar(value=f"{h_val:.4f}")
+            vl = tk.StringVar(value=f"{l_val:.4f}")
+            self.roi_vars[key] = (vx, vy, vh, vl)
+
+            ttk.Entry(grp, textvariable=vx, width=8).grid(row=row_idx, column=1, sticky="w", padx=(6, 4), pady=2)
+            ttk.Entry(grp, textvariable=vy, width=8).grid(row=row_idx, column=2, sticky="w", padx=(6, 4), pady=2)
+            ttk.Entry(grp, textvariable=vh, width=8).grid(row=row_idx, column=3, sticky="w", padx=(6, 4), pady=2)
+            ttk.Entry(grp, textvariable=vl, width=8).grid(row=row_idx, column=4, sticky="w", padx=(6, 4), pady=2)
+            ttk.Button(
+                grp,
+                text="Drag",
+                command=lambda k=key: self.open_interactive_bounds_editor(initial_key=k),
+            ).grid(row=row_idx, column=5, sticky="ew", padx=(6, 4), pady=2)
+            ttk.Button(
+                grp,
+                text="Test",
+                command=lambda k=key: self.test_single_bound(k),
+            ).grid(row=row_idx, column=6, sticky="w", padx=(6, 4), pady=2)
+            ttk.Label(grp, text=desc, style="Muted.TLabel").grid(row=row_idx, column=7, sticky="w", padx=(6, 0), pady=2)
+
+        bounds_btn_row = ttk.Frame(grp, style="Card.TFrame")
+        bounds_btn_row.grid(row=len(self.roi_defs) + 2, column=0, columnspan=8, sticky="w", pady=(8, 0))
+        ttk.Button(
+            bounds_btn_row,
+            text="Interactive Bounds Editor (Move / Resize All)",
+            style="Start.TButton",
+            command=lambda: self.open_interactive_bounds_editor(initial_key="roi_dig_target"),
+        ).pack(side="left", padx=(0, 8))
+        self.btn_test_all_bounds = ttk.Button(
+            bounds_btn_row,
+            text="Test All Bounds & Save Snapshot (F4)",
+            style="Accent.TButton",
+            command=self.test_all_bounds,
+        )
+        self.btn_test_all_bounds.pack(side="left", padx=(0, 8))
+        ttk.Button(
+            bounds_btn_row,
+            text="Reset 1440p 100% (Default)",
+            command=self.reset_default_bounds,
+        ).pack(side="left", padx=(0, 6))
+        ttk.Button(
+            bounds_btn_row,
+            text="Load 1440p 150% Preset",
+            command=self.load_1440p_150_bounds,
+        ).pack(side="left")
+
+        # Hotkey Configuration Section
+        hk_grp = ttk.LabelFrame(
+            frame,
+            text=" Global Hotkey Configuration ",
+            padding=(10, 8),
+        )
+        hk_grp.pack(fill="x", pady=(10, 0))
+        hk_grp.grid_columnconfigure(5, weight=1)
+
+        self.hotkey_defs = [
+            ("hotkey_start",       "Start Macro:"),
+            ("hotkey_pause",       "Pause / Resume:"),
+            ("hotkey_stop",        "Stop Macro:"),
+            ("hotkey_test_bounds", "Test All Bounds:"),
+        ]
+        self.hotkey_vars = {}
+        self.hotkey_bind_btns = {}
+
+        for idx, (hk_key, hk_label) in enumerate(self.hotkey_defs):
+            r = idx // 2
+            c_base = (idx % 2) * 3
+            ttk.Label(hk_grp, text=hk_label, font=("Segoe UI", 9, "bold")).grid(
+                row=r, column=c_base, sticky="w", padx=(0 if c_base == 0 else 18, 6), pady=4
+            )
+            var_hk = tk.StringVar(value=str(CONFIG.get(hk_key, DEFAULT_CONFIG[hk_key])).upper())
+            self.hotkey_vars[hk_key] = var_hk
+            cb = ttk.Combobox(
+                hk_grp,
+                textvariable=var_hk,
+                values=HOTKEY_CHOICES,
+                state="readonly",
+                width=9,
+            )
+            cb.grid(row=r, column=c_base + 1, sticky="w", padx=(0, 4), pady=4)
+            cb.bind("<<ComboboxSelected>>", lambda e: self.apply_and_save_gui(silent=True))
+
+            btn_bind = ttk.Button(
+                hk_grp,
+                text="Bind...",
+                command=lambda k=hk_key: self.start_key_bind(k),
+            )
+            btn_bind.grid(row=r, column=c_base + 2, sticky="w", padx=(0, 6), pady=4)
+            self.hotkey_bind_btns[hk_key] = btn_bind
+
+        ttk.Button(
+            hk_grp,
+            text="Reset Default Keys (F1–F4)",
+            command=self.reset_default_hotkeys,
+        ).grid(row=0, column=6, rowspan=2, sticky="e", padx=(12, 0), pady=4)
+
+    def start_key_bind(self, hk_key: str):
+        for k, b in self.hotkey_bind_btns.items():
+            b.config(text="Press Key..." if k == hk_key else "Bind...")
+        self._binding_target_var = hk_key
+
+        def _on_key(event):
+            if not self._binding_target_var:
+                return
+            target = self._binding_target_var
+            self._binding_target_var = None
+            sym = event.keysym.upper()
+            alias_map = {
+                "PRIOR": "PGUP",
+                "NEXT": "PGDN",
+                "ESCAPE": "NONE",
+                "BACKSPACE": "NONE",
+            }
+            mapped = alias_map.get(sym, sym)
+            if mapped not in VK_MAP:
+                log_event(f"[Hotkeys] Unsupported key '{sym}'. Choose F1–F12, Insert/Delete/Home/End, or A–Z.")
+            else:
+                self.hotkey_vars[target].set(mapped)
+                self.apply_and_save_gui(silent=True)
+                log_event(f"[Hotkeys] Bound {target.replace('hotkey_', '').upper()} -> {mapped}.")
+            for b in self.hotkey_bind_btns.values():
+                b.config(text="Bind...")
+            self.root.unbind("<KeyPress>", bind_id)
+
+        bind_id = self.root.bind("<KeyPress>", _on_key)
+        self.root.focus_force()
+
+    def reset_default_hotkeys(self):
+        for hk_key, _ in self.hotkey_defs:
+            self.hotkey_vars[hk_key].set(DEFAULT_CONFIG[hk_key])
+        self.apply_and_save_gui(silent=True)
+        log_event("[Hotkeys] Reset hotkeys to defaults (F1=Start, F2=Pause, F3=Stop, F4=Test Bounds).")
+
+    def _refresh_hotkey_labels(self):
+        hk_start = CONFIG.get("hotkey_start", "F1")
+        hk_pause = CONFIG.get("hotkey_pause", "F2")
+        hk_stop = CONFIG.get("hotkey_stop", "F3")
+        hk_bounds = CONFIG.get("hotkey_test_bounds", "F4")
+        if hasattr(self, "btn_start"):
+            self.btn_start.config(text=f"Start ({hk_start})")
+        if hasattr(self, "btn_pause"):
+            self.btn_pause.config(text=f"Pause ({hk_pause})")
+        if hasattr(self, "btn_stop"):
+            self.btn_stop.config(text=f"Stop ({hk_stop})")
+        if hasattr(self, "btn_test_all_bounds"):
+            self.btn_test_all_bounds.config(text=f"Test All Bounds & Save Snapshot ({hk_bounds})")
+
+    def apply_bounds_preset(self, preset_dict: dict, label_name: str):
+        for key, _, _, _ in self.roi_defs:
+            rx1, ry1, rx2, ry2 = preset_dict[key]
+            vx, vy, vh, vl = self.roi_vars[key]
+            vx.set(f"{float(rx1):.4f}")
+            vy.set(f"{float(ry1):.4f}")
+            vh.set(f"{max(0.001, float(ry2) - float(ry1)):.4f}")
+            vl.set(f"{max(0.001, float(rx2) - float(rx1)):.4f}")
+        self.apply_and_save_gui(silent=True)
+        log_event(f"[Bounds] Applied {label_name} vision & Sell Target bounds.")
+
+    def reset_default_bounds(self):
+        self.apply_bounds_preset(PRESET_BOUNDS_1440P_100, "2560x1440 (100% scale default)")
+
+    def load_1440p_150_bounds(self):
+        self.apply_bounds_preset(PRESET_BOUNDS_1440P_150, "2560x1440 (150% scale preset)")
+
+    def open_interactive_bounds_editor(self, initial_key: str = "roi_dig_target"):
+        """
+        Opens a full-client interactive canvas over the Roblox window (or primary monitor fallback)
+        allowing the user to move, resize (via 8 grab handles), or click-and-drag redraw any vision
+        or Sell Target bounding box with real-time ratio feedback.
+        """
+        self.apply_and_save_gui(silent=True)
+
+        if self.macro.vision.find_roblox():
+            cx, cy, cw, ch = self.macro.vision.update_client_rect()
+        else:
+            mon = self.macro.vision.sct.monitors[1]
+            cx, cy, cw, ch = mon["left"], mon["top"], mon["width"], mon["height"]
+            log_event("[Interactive Bounds] Roblox window not found — using primary monitor bounds.")
+
+        if self._overlay_win is not None:
+            try:
+                self._overlay_win.destroy()
+            except Exception:
+                pass
+            self._overlay_win = None
+
+        # Grab current screen frame as background so UI elements are frozen & visible while dragging
+        raw = self.macro.vision.sct.grab({"left": max(0, cx), "top": max(0, cy), "width": cw, "height": ch})
+        img_bgra = np.frombuffer(raw.raw, dtype=np.uint8).reshape(raw.height, raw.width, 4)
+        rgb = cv2.cvtColor(img_bgra, cv2.COLOR_BGRA2RGB)
+        rgb_dim = (rgb.astype(np.uint16) * 78 // 100).astype(np.uint8)
+        ppm_header = f"P6\n{cw} {ch}\n255\n".encode("ascii")
+        bg_photo = tk.PhotoImage(width=cw, height=ch, data=ppm_header + rgb_dim.tobytes(), format="PPM")
+
+        ov = tk.Toplevel(self.root)
+        self._overlay_win = ov
+        ov.wm_overrideredirect(True)
+        ov.wm_geometry(f"{cw}x{ch}+{cx}+{cy}")
+        try:
+            ov.wm_attributes("-topmost", True)
+        except Exception:
+            pass
+
+        canvas = tk.Canvas(ov, width=cw, height=ch, highlightthickness=0, bd=0, bg="#12141c")
+        canvas.pack(fill="both", expand=True)
+        canvas._bg_photo = bg_photo
+        canvas.create_image(0, 0, image=bg_photo, anchor="nw", tags="bg")
+
+        # Load working pixel boxes for all regions (including Sell Target)
+        boxes = {}
+        for k, _, _, _ in self.roi_defs:
+            rx1, ry1, rx2, ry2 = CONFIG.get(k, DEFAULT_CONFIG[k])
+            boxes[k] = [int(cw * rx1), int(ch * ry1), int(cw * rx2), int(ch * ry2)]
+
+        state = {
+            "active_key": initial_key or "roi_dig_target",
+            "drag_mode": None,      # 'move', 'resize', 'draw'
+            "drag_key": None,
+            "handle": None,         # 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
+            "start_x": 0,
+            "start_y": 0,
+            "orig_box": None,
+        }
+
+        # Top Floating Toolbar
+        toolbar = tk.Frame(canvas, bg="#151822", bd=1, relief="solid", padx=10, pady=6)
+        canvas.create_window(cw // 2, 10, window=toolbar, anchor="n", tags="ui")
+
+        top_row = tk.Frame(toolbar, bg="#151822")
+        top_row.pack(fill="x")
+
+        tk.Label(
+            top_row,
+            text="INTERACTIVE BOUNDS:",
+            font=("Segoe UI", 9, "bold"),
+            bg="#151822",
+            fg=self.ACCENT_PINK,
+        ).pack(side="left", padx=(0, 6))
+
+        pill_btns = {}
+        all_items = [(k, lbl, clr) for k, lbl, clr, _ in self.roi_defs]
+
+        def _select_active(k_sel):
+            state["active_key"] = k_sel
+            for item_k, btn in pill_btns.items():
+                if item_k == k_sel:
+                    btn.config(bg="#363e57", relief="solid", bd=1)
+                else:
+                    btn.config(bg="#212534", relief="flat", bd=1)
+            _redraw()
+
+        for idx, (k, lbl, clr) in enumerate(all_items, start=1):
+            b = tk.Button(
+                top_row,
+                text=f"{idx}: {lbl}",
+                font=("Segoe UI", 8, "bold"),
+                fg=clr,
+                bg="#212534",
+                activebackground="#363e57",
+                activeforeground=clr,
+                padx=6,
+                pady=2,
+                cursor="hand2",
+                command=lambda k_arg=k: _select_active(k_arg),
+            )
+            b.pack(side="left", padx=2)
+            pill_btns[k] = b
+
+        def _save_and_close(event=None):
+            for k, (x1, y1, x2, y2) in boxes.items():
+                rx1 = max(0.0, min(0.995, x1 / max(1, cw)))
+                ry1 = max(0.0, min(0.995, y1 / max(1, ch)))
+                rx2 = max(rx1 + 0.002, min(1.0, x2 / max(1, cw)))
+                ry2 = max(ry1 + 0.002, min(1.0, y2 / max(1, ch)))
+                vx, vy, vh, vl = self.roi_vars[k]
+                vx.set(f"{rx1:.4f}")
+                vy.set(f"{ry1:.4f}")
+                vh.set(f"{ry2 - ry1:.4f}")
+                vl.set(f"{rx2 - rx1:.4f}")
+
+            self.apply_and_save_gui(silent=False)
+            log_event("[Interactive Bounds] Updated and saved all region bounds.")
+            _close()
+
+        def _close(event=None):
+            if self._overlay_win is ov:
+                self._overlay_win = None
+            try:
+                ov.destroy()
+            except Exception:
+                pass
+
+        tk.Button(
+            top_row,
+            text="Save & Close (Enter)",
+            font=("Segoe UI", 8, "bold"),
+            bg="#166534",
+            fg="#ffffff",
+            padx=8,
+            pady=2,
+            cursor="hand2",
+            command=_save_and_close,
+        ).pack(side="left", padx=(12, 4))
+
+        tk.Button(
+            top_row,
+            text="Cancel (Esc)",
+            font=("Segoe UI", 8, "bold"),
+            bg="#991b1b",
+            fg="#ffffff",
+            padx=8,
+            pady=2,
+            cursor="hand2",
+            command=_close,
+        ).pack(side="left", padx=2)
+
+        lbl_status = tk.Label(
+            toolbar,
+            text="",
+            font=("Consolas", 8),
+            bg="#151822",
+            fg="#e5e7eb",
+            pady=2,
+        )
+        lbl_status.pack(fill="x", pady=(4, 0))
+
+        HANDLE_R = 5
+
+        def _get_handles(x1, y1, x2, y2):
+            mx, my = (x1 + x2) // 2, (y1 + y2) // 2
+            return {
+                "nw": (x1, y1),
+                "ne": (x2, y1),
+                "sw": (x1, y2),
+                "se": (x2, y2),
+                "n":  (mx, y1),
+                "s":  (mx, y2),
+                "w":  (x1, my),
+                "e":  (x2, my),
+            }
+
+        def _hit_test(px, py):
+            ordered_keys = [state["active_key"]] if state["active_key"] in boxes else []
+            for k, _, _, _ in self.roi_defs:
+                if k not in ordered_keys:
+                    ordered_keys.append(k)
+
+            for k in ordered_keys:
+                x1, y1, x2, y2 = boxes[k]
+                for h_name, (hx, hy) in _get_handles(x1, y1, x2, y2).items():
+                    if abs(px - hx) <= HANDLE_R + 3 and abs(py - hy) <= HANDLE_R + 3:
+                        return ("resize", k, h_name)
+
+            for k in ordered_keys:
+                x1, y1, x2, y2 = boxes[k]
+                if x1 <= px <= x2 and y1 <= py <= y2:
+                    return ("move", k, None)
+
+            return (None, None, None)
+
+        def _redraw():
+            canvas.delete("overlay")
+            act = state["active_key"]
+
+            for k, lbl, clr, _ in self.roi_defs:
+                x1, y1, x2, y2 = boxes[k]
+                is_active = (k == act)
+                width = 3 if is_active else 2
+                canvas.create_rectangle(
+                    x1, y1, x2, y2,
+                    outline=clr,
+                    width=width,
+                    tags="overlay",
+                )
+                canvas.create_text(
+                    x1, max(16, y1 - 6),
+                    text=f"{'★ ' if is_active else ''}{lbl}",
+                    fill=clr,
+                    anchor="sw",
+                    font=("Segoe UI", 9, "bold"),
+                    tags="overlay",
+                )
+                if k == "roi_sell_target":
+                    mx, my = (x1 + x2) // 2, (y1 + y2) // 2
+                    canvas.create_oval(mx - 4, my - 4, mx + 4, my + 4, fill=clr, outline="#000000", tags="overlay")
+                if is_active:
+                    for _, (hx, hy) in _get_handles(x1, y1, x2, y2).items():
+                        canvas.create_rectangle(
+                            hx - HANDLE_R, hy - HANDLE_R, hx + HANDLE_R, hy + HANDLE_R,
+                            fill=clr, outline="#000000", width=1, tags="overlay"
+                        )
+
+            if act in boxes:
+                x1, y1, x2, y2 = boxes[act]
+                rx = x1 / max(1, cw)
+                ry = y1 / max(1, ch)
+                rh = (y2 - y1) / max(1, ch)
+                rl = (x2 - x1) / max(1, cw)
+                name_str = dict((k, l) for k, l, _, _ in self.roi_defs).get(act, act)
+                lbl_status.config(
+                    text=(
+                        f"Active: {name_str}  |  X={rx:.4f}  Y={ry:.4f}  Height={rh:.4f}  Length={rl:.4f}  |  "
+                        "Drag inside to move, drag handles to resize, or drag on empty space to draw new box"
+                    )
+                )
+
+        cursor_map = {
+            "nw": "size_nw_se", "se": "size_nw_se",
+            "ne": "size_ne_sw", "sw": "size_ne_sw",
+            "n": "size_ns",     "s": "size_ns",
+            "e": "size_we",     "w": "size_we",
+        }
+
+        def _on_motion(event):
+            if state["drag_mode"] is None:
+                mode, k, h_name = _hit_test(event.x, event.y)
+                if mode == "resize":
+                    canvas.config(cursor=cursor_map.get(h_name, "crosshair"))
+                elif mode == "move":
+                    canvas.config(cursor="fleur")
+                else:
+                    canvas.config(cursor="crosshair")
+                return
+
+            dx = event.x - state["start_x"]
+            dy = event.y - state["start_y"]
+            mode = state["drag_mode"]
+            k = state["drag_key"]
+
+            if mode == "move" and k in boxes:
+                ox1, oy1, ox2, oy2 = state["orig_box"]
+                bw, bh = ox2 - ox1, oy2 - oy1
+                nx1 = max(0, min(cw - bw, ox1 + dx))
+                ny1 = max(0, min(ch - bh, oy1 + dy))
+                boxes[k] = [nx1, ny1, nx1 + bw, ny1 + bh]
+            elif mode == "resize" and k in boxes:
+                x1, y1, x2, y2 = state["orig_box"]
+                h_name = state["handle"]
+                if "w" in h_name:
+                    x1 = min(x2 - 6, max(0, x1 + dx))
+                if "e" in h_name:
+                    x2 = max(x1 + 6, min(cw, x2 + dx))
+                if "n" in h_name:
+                    y1 = min(y2 - 6, max(0, y1 + dy))
+                if "s" in h_name:
+                    y2 = max(y1 + 6, min(ch, y2 + dy))
+                boxes[k] = [x1, y1, x2, y2]
+            elif mode == "draw" and k in boxes:
+                x1 = max(0, min(cw, min(state["start_x"], event.x)))
+                y1 = max(0, min(ch, min(state["start_y"], event.y)))
+                x2 = max(x1 + 6, min(cw, max(state["start_x"], event.x)))
+                y2 = max(y1 + 6, min(ch, max(state["start_y"], event.y)))
+                boxes[k] = [x1, y1, x2, y2]
+
+            _redraw()
+
+        def _on_press(event):
+            mode, k, h_name = _hit_test(event.x, event.y)
+            state["start_x"] = event.x
+            state["start_y"] = event.y
+
+            if mode in ("resize", "move"):
+                _select_active(k)
+                state["drag_mode"] = mode
+                state["drag_key"] = k
+                state["handle"] = h_name
+                state["orig_box"] = list(boxes[k])
+            else:
+                act = state["active_key"]
+                if act in boxes:
+                    state["drag_mode"] = "draw"
+                    state["drag_key"] = act
+                    boxes[act] = [event.x, event.y, event.x + 6, event.y + 6]
+                    _redraw()
+
+        def _on_release(event):
+            state["drag_mode"] = None
+            state["drag_key"] = None
+            state["handle"] = None
+            state["orig_box"] = None
+
+        canvas.bind("<Motion>", _on_motion)
+        canvas.bind("<ButtonPress-1>", _on_press)
+        canvas.bind("<B1-Motion>", _on_motion)
+        canvas.bind("<ButtonRelease-1>", _on_release)
+        ov.bind("<Return>", _save_and_close)
+        ov.bind("<Escape>", _close)
+        for idx, (k, _, _) in enumerate(all_items, start=1):
+            ov.bind(str(idx), lambda e, k_arg=k: _select_active(k_arg))
+
+        _select_active(state["active_key"])
+        ov.focus_force()
+
+    def show_bounds_overlay(self, keys_to_show, duration_ms: int = 2200):
+        if not self.macro.vision.find_roblox():
+            return
+        cx, cy, cw, ch = self.macro.vision.update_client_rect()
+
+        if self._overlay_win is not None:
+            try:
+                self._overlay_win.destroy()
+            except Exception:
+                pass
+            self._overlay_win = None
+
+        ov = tk.Toplevel(self.root)
+        self._overlay_win = ov
+        ov.wm_overrideredirect(True)
+        ov.wm_geometry(f"{cw}x{ch}+{cx}+{cy}")
+        trans_key = "#010101"
+        ov.configure(bg=trans_key)
+        try:
+            ov.wm_attributes("-topmost", True)
+            ov.wm_attributes("-transparentcolor", trans_key)
+        except Exception:
+            pass
+
+        canvas = tk.Canvas(ov, width=cw, height=ch, bg=trans_key, highlightthickness=0, bd=0)
+        canvas.pack(fill="both", expand=True)
+
+        color_map = {k: (lbl, clr) for k, lbl, clr, _ in self.roi_defs}
+        for k in keys_to_show:
+            if k in color_map:
+                lbl, clr = color_map[k]
+                rx1, ry1, rx2, ry2 = CONFIG.get(k, DEFAULT_CONFIG[k])
+                x1, y1 = int(cw * rx1), int(ch * ry1)
+                x2, y2 = int(cw * rx2), int(ch * ry2)
+                canvas.create_rectangle(x1, y1, x2, y2, outline=clr, width=2)
+                canvas.create_text(
+                    x1, max(14, y1 - 6), text=lbl, fill=clr, anchor="sw", font=("Segoe UI", 9, "bold")
+                )
+                if k == "roi_sell_target":
+                    mx, my = (x1 + x2) // 2, (y1 + y2) // 2
+                    canvas.create_oval(mx - 5, my - 5, mx + 5, my + 5, outline=clr, width=2)
+
+        def _close():
+            if self._overlay_win is ov:
+                self._overlay_win = None
+            try:
+                ov.destroy()
+            except Exception:
+                pass
+
+        ov.after(duration_ms, _close)
+
+    def test_single_bound(self, key: str):
+        self.apply_and_save_gui(silent=True)
+        self.show_bounds_overlay([key], duration_ms=2200)
+        result = self.macro.vision.evaluate_region(key, move_to_sell=(key == "roi_sell_target"))
+        log_event(f"[Test Bound] {result}")
+
+    def test_all_bounds(self):
+        self.apply_and_save_gui(silent=True)
+        all_keys = [k for k, _, _, _ in self.roi_defs]
+        self.show_bounds_overlay(all_keys, duration_ms=2500)
+        if not self.macro.vision.find_roblox():
+            log_event("[Test Bounds] Roblox window not found! Open Roblox to test bounds.")
+            return
+        summaries = [self.macro.vision.evaluate_region(k, move_to_sell=False) for k in all_keys]
+        for s in summaries:
+            log_event(f"[Test All] {s}")
+        self.macro.vision.save_debug_snapshot()
+
+    def on_save_snapshot(self):
+        self.test_all_bounds()
 
     def _init_webhook_tab(self):
         frame = ttk.Frame(self.tab_webhook, padding=12)
@@ -1893,15 +2619,14 @@ class ProspectingGUI:
             fg=self.FG_MUTED,
         ).pack(side="left", padx=(6, 0))
 
-        ttk.Button(bar, text="Stop (F3)", style="Stop.TButton", command=self.macro.stop).pack(
-            side="right", padx=3
-        )
-        ttk.Button(
+        self.btn_stop = ttk.Button(bar, text="Stop (F3)", style="Stop.TButton", command=self.macro.stop)
+        self.btn_stop.pack(side="right", padx=3)
+        self.btn_pause = ttk.Button(
             bar, text="Pause (F2)", style="Pause.TButton", command=self.macro.toggle_pause
-        ).pack(side="right", padx=3)
-        ttk.Button(bar, text="Start (F1)", style="Start.TButton", command=self.on_start).pack(
-            side="right", padx=3
         )
+        self.btn_pause.pack(side="right", padx=3)
+        self.btn_start = ttk.Button(bar, text="Start (F1)", style="Start.TButton", command=self.on_start)
+        self.btn_start.pack(side="right", padx=3)
 
     def toggle_topmost(self):
         top = bool(self.var_topmost.get())
@@ -1929,14 +2654,31 @@ class ProspectingGUI:
                 "autosell_cycles": int(float(self.var_sell_cycles.get())),
                 "scroll_out_notches": int(float(self.var_scroll_out.get())),
                 "scroll_in_notches": int(float(self.var_scroll_in.get())),
-                "sell_coords": [[round(float(self.var_sell_x.get()), 4), round(float(self.var_sell_y.get()), 4)]],
                 "always_on_top": bool(self.var_topmost.get()),
                 "webhook_enabled": bool(self.var_webhook_enabled.get()),
                 "webhook_url": self.var_webhook_url.get().strip(),
                 "webhook_interval_min": max(1, int(float(self.var_webhook_interval.get()))),
             }
+            for key, (vx, vy, vh, vl) in getattr(self, "roi_vars", {}).items():
+                x_val = max(0.0, min(0.995, float(vx.get())))
+                y_val = max(0.0, min(0.995, float(vy.get())))
+                h_val = max(0.002, min(1.0 - y_val, float(vh.get())))
+                l_val = max(0.002, min(1.0 - x_val, float(vl.get())))
+                updated[key] = [
+                    round(x_val, 4),
+                    round(y_val, 4),
+                    round(x_val + l_val, 4),
+                    round(y_val + h_val, 4),
+                ]
+            if "roi_sell_target" in updated:
+                sr = updated["roi_sell_target"]
+                updated["sell_coords"] = [[round((sr[0] + sr[2]) * 0.5, 4), round((sr[1] + sr[3]) * 0.5, 4)]]
+            for hk_key, var_hk in getattr(self, "hotkey_vars", {}).items():
+                val_hk = str(var_hk.get()).strip().upper()
+                updated[hk_key] = val_hk if val_hk in VK_MAP else DEFAULT_CONFIG[hk_key]
             save_config(updated)
             self.toggle_topmost()
+            self._refresh_hotkey_labels()
             if not silent:
                 log_event("[Config] Settings saved to prospecting_settings.json.")
         except ValueError as e:
@@ -1950,44 +2692,29 @@ class ProspectingGUI:
         self.apply_and_save_gui(silent=True)
         self.macro.test_walk_cycle()
 
-    def pick_sell_coord(self):
-        def _capture():
-            log_event("[Picker] Hover mouse over Sell button in Roblox... Capturing in 3s!")
-            time.sleep(3.0)
-            if not self.macro.vision.find_roblox():
-                log_event("[Picker] Error: Roblox window not found.")
-                return
-            cx, cy, cw, ch = self.macro.vision.update_client_rect()
-            pt = wintypes.POINT()
-            user32.GetCursorPos(ctypes.byref(pt))
-            rx = max(0.0, min(1.0, (pt.x - cx) / max(1, cw)))
-            ry = max(0.0, min(1.0, (pt.y - cy) / max(1, ch)))
-            self.var_sell_x.set(f"{rx:.4f}")
-            self.var_sell_y.set(f"{ry:.4f}")
-            self.apply_and_save_gui(silent=True)
-            log_event(f"[Picker] Captured Sell Ratio: ({rx:.4f}, {ry:.4f}).")
-
-        threading.Thread(target=_capture, daemon=True).start()
-
     def _start_background_updaters(self):
-        self._hotkey_state = {vk: False for vk in (VK_F1, VK_F2, VK_F3, VK_F4, VK_F5, VK_F6)}
+        self._hotkey_state = {}
         self._poll_hotkeys()
         self._update_ui_telemetry()
 
     def _poll_hotkeys(self):
-        actions = {
-            VK_F1: self.on_start,
-            VK_F2: self.macro.toggle_pause,
-            VK_F3: self.macro.stop,
-            VK_F4: self.macro.vision.save_debug_snapshot,
-            VK_F5: lambda: threading.Thread(
-                target=self.macro.auto_sell, kwargs={"standalone_test": True}, daemon=True
-            ).start(),
-            VK_F6: self.on_test_walk,
-        }
-        for vk, callback in actions.items():
+        if self._binding_target_var is not None:
+            self.root.after(30, self._poll_hotkeys)
+            return
+
+        hotkey_bindings = [
+            (CONFIG.get("hotkey_start", "F1"), self.on_start),
+            (CONFIG.get("hotkey_pause", "F2"), self.macro.toggle_pause),
+            (CONFIG.get("hotkey_stop", "F3"), self.macro.stop),
+            (CONFIG.get("hotkey_test_bounds", "F4"), self.test_all_bounds),
+        ]
+        for key_name, callback in hotkey_bindings:
+            vk = VK_MAP.get(str(key_name).upper(), 0)
+            if not vk:
+                continue
             is_down = (user32.GetAsyncKeyState(vk) & 0x8000) != 0
-            if is_down and not self._hotkey_state[vk]:
+            was_down = self._hotkey_state.get(vk, False)
+            if is_down and not was_down:
                 callback()
             self._hotkey_state[vk] = is_down
 
@@ -2071,5 +2798,10 @@ if __name__ == "__main__":
     macro_instance = ProspectingMacro()
     app_root = tk.Tk()
     gui = ProspectingGUI(app_root, macro_instance)
-    log_event("System Ready | F1=Start | F2=Pause | F3=Stop | F4=Snap | F5=Sell | F6=WalkTest")
+    log_event(
+        f"Macro Ready | {CONFIG.get('hotkey_start', 'F1')}=Start | "
+        f"{CONFIG.get('hotkey_pause', 'F2')}=Pause | "
+        f"{CONFIG.get('hotkey_stop', 'F3')}=Stop | "
+        f"{CONFIG.get('hotkey_test_bounds', 'F4')}=Test Bounds"
+    )
     app_root.mainloop()
