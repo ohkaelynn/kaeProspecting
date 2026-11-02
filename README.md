@@ -10,7 +10,9 @@ A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblo
 
 ## Video Showcase
 
-[![Watch the Demo on YouTube](https://img.youtube.com/vi/V2zM7D6ncGg/maxresdefault.jpg)](https://youtu.be/V2zM7D6ncGg)
+<a href="https://youtu.be/V2zM7D6ncGg">
+  <img src="https://img.youtube.com/vi/V2zM7D6ncGg/maxresdefault.jpg" alt="Watch the Demo on YouTube" width="600">
+</a>
 
 *Click the thumbnail above or watch directly on YouTube: **[https://youtu.be/V2zM7D6ncGg](https://youtu.be/V2zM7D6ncGg)***
 
@@ -18,31 +20,20 @@ A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblo
 
 ## Interface & Screenshots
 
-### Main Page (Dashboard & Logs)
-Tracks live runtime, cycle counts, perfect dig accuracy, cash balance/hourly rate, and color-coded event logs.
+| Main Page (Dashboard & Logs) | Movement Page |
+| :---: | :---: |
+| <img src="assets/main.png" alt="Main Page" width="400"> | <img src="assets/movement.png" alt="Movement Page" width="400"> |
+| Live runtime, cycle counts, perfect dig rate, cash tracker & color logs | `Vision`, `Mirror`, or `Fixed` modes with `W`/`S` parity & drift trim |
 
-![Main Page - Dashboard & Logs](assets/main.png)
+| Dig & Pan Settings | Auto-Sell Settings |
+| :---: | :---: |
+| <img src="assets/dig_pan.png" alt="Dig & Pan Settings" width="400"> | <img src="assets/autosell.png" alt="Auto-Sell Settings" width="400"> |
+| Spade hold/release timing, cooldowns, max scoops & wash timeouts | Periodic backpack selling, zoom notches & 3s coordinate picker |
 
-### Movement Page
-Configures shoreline navigation (`Vision`, `Mirror`, or `Fixed`) and `W`/`S` walk durations with drift trim adjustments.
-
-![Movement Page](assets/movement.png)
-
-### Dig & Pan Settings
-Controls spade hold-and-release timing, scoop cooldowns, fallback dig limits, and pan wash timeouts.
-
-![Dig & Pan Settings](assets/dig_pan.png)
-
-### Auto-Sell Settings
-Configures periodic backpack selling, camera zoom scroll notches, and a 3-second interactive Sell coordinate picker.
-
-![Auto-Sell Settings](assets/autosell.png)
-
-### Webhook Settings
-Sends periodic, non-spammy session summary embeds to Discord with runtime, cycles, perfect dig rate, and cash progression.
-
-![Webhook Settings](assets/webhook.png)
-![Discord Webhook Summary Embed](assets/webhook_embed.png)
+| Webhook Settings | Discord Summary Embed |
+| :---: | :---: |
+| <img src="assets/webhook.png" alt="Webhook Settings" width="400"> | <img src="assets/webhook_embed.png" alt="Discord Webhook Embed" width="400"> |
+| Configurable interval & one-click test embed sender | Clean, non-spammy session summary embeds in Discord |
 
 ---
 
