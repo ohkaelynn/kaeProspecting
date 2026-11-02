@@ -1,80 +1,97 @@
 # Prospecting! Automation Macro
 
-Supported Game: https://www.roblox.com/games/129827112113663/Prospecting
+[![Game Link](https://img.shields.io/badge/Roblox-Prospecting!-00A2FF?logo=roblox&logoColor=white)](https://www.roblox.com/games/129827112113663/Prospecting)
 
-An automated macro for the Roblox game *Prospecting!*, built with Python. It functions like the built in auto-pan without the debuffs. 
-It reads on-screen prompts to automatically walk between digging and panning, tries to fix mistakes if you get stuck, and reports your stats to a Discord webhook.
+An automated macro for the Roblox game [*Prospecting!*](https://www.roblox.com/games/129827112113663/Prospecting), built in Python. It mimics the mechanics of the built-in auto-pan feature without applying the in-game debuffs.
 
-> **Notice:** This project was vibe coded by Argon 4 and lightly cleaned up for general use.
+The script reads on-screen visual prompts to navigate seamlessly between digging and panning, handles common recovery scenarios if you get stuck, and streams session telemetry directly to your Discord server via webhooks.
+
+> **Notice:** This project was originally vibe coded by **Argon 4** and lightly cleaned up for general community use.
 
 ---
 
 ## Game Policy & Safety
 
-* **Macros are allowed** by the creator of *Prospecting!*.
-* This tool uses standard Windows mouse and keyboard simulation. It does not inject code, modify memory, or alter the Roblox client.
+* **Macro Compliance:** Macros are officially permitted by the developer of *Prospecting!*.
+* **Client Integrity:** This tool relies solely on standard Windows OS mouse and keyboard input simulation (`SendInput`). It does not inject DLLs, inspect memory, or modify the Roblox client in any way.
+* **Security Reminder:** Be cautious when downloading third-party macros and scripts—many tools circulating online contain malicious payloads. Always verify source code before running automation tools.
 
 ---
 
-## Screen & System Setup
+## System Requirements
 
-* **Primary Screen:** Roblox must be running on your main monitor.
-* **Resolution:** Designed for **`2560x1440` (Windowed)**.
-  * *Note:* At other resolutions like `1920x1080`, screen detection zones may need small tweaks.
-* **OS:** Windows 10 or 11 (64-bit).
+* **Operating System:** Windows 10 or 11 (64-bit).
+* **Display Configuration:**
+  * **Monitor:** Must run on your **Primary Display**.
+  * **Resolution:** Calibrated for **`2560x1440` (Maximized / Windowed)**.
+  * *Note:* At other resolutions (e.g., `1920x1080`), detection regions may require manual coordinate adjustments.
 
 ---
 
-## What It Does
+## Core Features
 
-1. **Smart Movement:**
-   - **Walks forward (`W`)** until the prompt switches to water/panning, then stops.
-   - **Walks backward (`S`)** until the prompt switches back to digging dirt.
-2. **Auto-Recovery:**
-   - If it sees *"Not enough sand!"*, it backs up onto the dirt.
-   - If it sees *"Your pan is full!"*, it steps forward deeper into the water to wash.
-3. **Spade Minigame Solver:**
-   - Watches the dig slider and releases the click right inside the green zone.
-4. **Pan Fill Detection:**
-   - Detects when the pan has gathered enough sand and heads straight to the water.
-5. **Auto-Sell:**
-   - Periodically opens the menu and sells your haul automatically.
-6. **Discord Webhook Updates:**
-   - Posts status updates (runtime, cycles, perfect dig rate, and earnings) to your Discord channel.
+* **Visual Navigation:**
+  * **Walk Forward (`W`):** Holds movement until the screen prompt registers water/panning, then stops.
+  * **Walk Backward (`S`):** Returns to dirt once panning completes and the dig prompt reappears.
+* **Automatic Error Recovery:**
+  * Backs up onto dirt if an alert reads *"Not enough sand!"*.
+  * Moves deeper into the water if an alert reads *"Your pan is full!"*.
+* **Spade Minigame Timing:**
+  * Monitors the dig slider track and releases the mouse click precisely when hitting the green sweet spot.
+* **Pan Fill Detection:**
+  * Measures sand accumulation inside the pan and triggers transition to water when full.
+* **Auto-Sell Routine:**
+  * Periodically opens the merchant interface, executes the sell sequence, and resumes farming.
+* **Discord Telemetry:**
+  * Emits clean webhook embeds tracking runtime, cycle counts, perfect dig success rate, and balance progression.
 
 ---
 
 ## Hotkeys
 
-| Hotkey | Action |
-| :--- | :--- |
-| **`F1`** | **Start Macro** (focuses Roblox window) |
-| **`F2`** | **Pause / Resume** |
-| **`F3`** | **Emergency Stop** (releases all keys/mouse clicks) |
-| **`F4`** | **Save Debug Screenshot** (creates `debug_vision.png` to check boxes) |
-| **`F5`** | **Test Auto-Sell** |
-| **`F6`** | **Test Walking Logic** |
+| Hotkey | Action | Description |
+| :--- | :--- | :--- |
+| **`F1`** | **Start Macro** | Focuses the Roblox window and begins execution |
+| **`F2`** | **Pause / Resume** | Temporarily halts or resumes input loops |
+| **`F3`** | **Emergency Stop** | Immediately stops all operations and releases held keys/clicks |
+| **`F4`** | **Debug Snapshot** | Generates `debug_vision.png` to inspect screen bounding boxes |
+| **`F5`** | **Test Auto-Sell** | Manually runs the auto-sell routine for calibration |
+| **`F6`** | **Test Walk Logic** | Runs a single movement cycle to test threshold alignment |
 
 ---
 
-## Setup
+## Installation & Setup
 
-1. **Install Python 3.10+ (64-bit)**.
-2. **Install required packages:**
-   ```bash
-   pip install opencv-python mss numpy
-   ```
-3. *(Optional, for fallbacks and reading cash balance via OCR)* Install [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) for Windows and the Python wrapper:
+### 1. Environment Setup
+
+Ensure **Python 3.10+ (64-bit)** is installed and added to your system `PATH`. Then install the core dependencies:
+
+```bash
+pip install opencv-python mss numpy
+```
+
+*(Optional)* If you want automated cash-balance tracking via OCR:
+1. Download and install [Tesseract-OCR for Windows](https://github.com/tesseract-ocr/tesseract).
+2. Install the Python bindings:
    ```bash
    pip install pytesseract
    ```
-4. **In Roblox:**
-   - Maximized window on your primary monitor (`2560x1440`).
-   - Equip your pan, and stand near the water's edge facing the lake.
-5. **Launch:**
+
+---
+
+### 2. In-Game Positioning
+
+1. Launch Roblox and keep the window maximized on your **primary monitor** at `2560x1440`.
+2. Equip your **pan**.
+3. Position your character at the shoreline facing directly toward the water.
+
+---
+
+### 3. Running the Macro
+
+1. Run the script from your terminal:
    ```bash
    python kaeProspect.py
    ```
-   Add your Discord webhook URL in the settings tab if you want updates, then press **`F1`** to start.
-
-   May receive updates, please be cautious with other macros/tools as during my research I came across many malicious results.
+2. *(Optional)* Input your Discord webhook URL in the settings interface to enable progress logging.
+3. Switch to Roblox and press **`F1`** to begin the macro. Press **`F3`** at any point to stop.
