@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Roblox Prospecting! — Vision-Only Automation Macro with Clean Webhook & Auto-Recoveries
-Vibe-coded tool utilizing MSS screen capture, Win32 SendInput, and color/prompt vision.
+Roblox Prospecting! Automation Macro
 """
 
 import ctypes
