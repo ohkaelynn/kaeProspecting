@@ -2,6 +2,12 @@
 
 [![Game Link](https://img.shields.io/badge/Roblox-Prospecting!-00A2FF?logo=roblox&logoColor=white)](https://www.roblox.com/games/129827112113663/Prospecting)
 
+> [!CAUTION]
+> ### ⚠️ SECURITY WARNING — BEWARE OF CLOSED-SOURCE MACROS
+> **BE WARY OF OTHER MACROS (SUCH AS ORNATE) THAT DO NOT PROVIDE SOURCE CODE. NEVER RUN OBFUSCATED CODE OR COMPILED BINARIES (`.exe`) YOU DO NOT FULLY TRUST!**
+> During research for this project, multiple malicious uploads disguised as *Prospecting!* macros were found circulating online. `kaeProspect` is distributed strictly as a single, human-readable `.py` file so you can inspect every line yourself before running it.
+>
+
 A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblox.com/games/129827112113663/Prospecting). It replicates the core digging and panning loop without the in-game auto-pan debuffs, using screen-space vision to time spade releases, detect prompts, recover from shoreline drift, and track session earnings.
 
 > **Credits:** Created by **kaelynn** & **Argon 4 (Antigravity)** for public community release.
