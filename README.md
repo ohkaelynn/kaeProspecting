@@ -33,7 +33,7 @@ A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblo
 | Webhook Settings | Discord Summary Embed |
 | :---: | :---: |
 | <img src="assets/webhook.png" alt="Webhook Settings" width="400"> | <img src="assets/webhook_embed.png" alt="Discord Webhook Embed" width="400"> |
-| Configurable interval & one-click test embed sender | Clean, non-spammy session summary embeds in Discord (example has invalid OCR, should be fixed)|
+| Configurable interval & one-click test embed sender | Clean summary embeds in Discord (example has invalid OCR, should be fixed)|
 
 ---
 
