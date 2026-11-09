@@ -1,15 +1,14 @@
-# kaeProspect — Prospecting! Automation Macro (v1.1)
+# kaeProspect — Prospecting! Automation Macro (v1.2)
 
 [![Game Link](https://img.shields.io/badge/Roblox-Prospecting!-00A2FF?logo=roblox&logoColor=white)](https://www.roblox.com/games/129827112113663/Prospecting)
-[![Version](https://img.shields.io/badge/version-1.1.0-f472b6)]()
+[![Version](https://img.shields.io/badge/version-1.2.0-f472b6)]()
 
 > [!CAUTION]
 > ### ⚠️ SECURITY WARNING — BEWARE OF CLOSED-SOURCE MACROS
 > **BE WARY OF OTHER MACROS (SUCH AS REDISTS of ORNATE) THAT DO NOT PROVIDE SOURCE CODE. NEVER RUN OBFUSCATED CODE OR COMPILED BINARIES (`.exe`) YOU DO NOT FULLY TRUST!**
 > During research for this project, multiple malicious uploads disguised as *Prospecting!* macros were found circulating online. `kaeProspect` is distributed strictly as a single, human-readable `.py` file so you can inspect every line yourself before running it.
->
 
-A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblox.com/games/129827112113663/Prospecting). It replicates the core digging and panning loop without the in-game auto-pan debuffs, using screen-space vision to time spade releases, detect prompts, recover from shoreline drift, and track session earnings.
+A lightweight, high-performance Python automation macro for the Roblox game [*Prospecting!*](https://www.roblox.com/games/129827112113663/Prospecting). It replicates the core digging and panning loop without the in-game auto-pan debuffs, using screen-space vision to time spade releases, detect prompts, recover from shoreline drift, and track session earnings.
 
 > **Credits:** Created by **kaelynn** & **Argon 4 (Antigravity)** for public community release.
 
@@ -52,19 +51,22 @@ A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblo
 
 ---
 
-## System Requirements
+## System Requirements & Display Scaling
 
 * **OS:** Windows 10 or 11 (64-bit)
 * **Python:** Python 3.10+ (64-bit)
 * **Display:** Run Roblox in **Windowed** or **Maximized Windowed** mode on your **Primary Monitor**.
-  * Default vision bounds are calibrated at **`2560x1440` with 100% Windows Display Scaling**, and a built-in **`2560x1440` (150% Windows Scaling)** preset is included directly in the HUD (plus [`prospecting_settings_1440p_150.json`](prospecting_settings_1440p_150.json)).
-  * If you use a different resolution (e.g., `1920x1080`) or Windows scaling percentage, use the **Bounds & Keys** tab in the HUD to switch presets, drag/resize regions interactively on screen, or edit each region's `X`, `Y`, `Height`, and `Length`, and click **Test** on individual regions or **Test All Bounds (`F4`)** to highlight the regions directly over Roblox and save `debug_vision.png`.
+  * **Tested Calibration:** Default vision bounds are tested and calibrated on **`2560x1440` with 150% Windows Display Scaling** (a common default on QHD monitors and high-DPI laptops), with [`prospecting_settings_1440p_150.json`](prospecting_settings_1440p_150.json) included.
+  * **1080p (100% scale) or 1440p (100% scale) Notice:** Because Roblox UI elements scale based on resolution and Windows DPI settings, bounds on 1080p (100%) or 1440p (100%) setups may be slightly offset initially. If your boxes don't align out of the box, simply press **`F4`** (or open the **Bounds & Keys** tab and click **Interactive Bounds Editor**) to drag and adjust your bounding boxes directly over Roblox in under 10 seconds, or click the **Reset 1440p 100%** preset button.
 
 ---
 
-## Features
+## Features & Improvements
 
-* **Spade Minigame Vision:** Tracks the moving slider bar and releases LMB at the top green target zone.
+* **Refined Dig Timing & Spade Vision:** Eliminates false releases from 3D background elements (water foam, particles, green foliage) with dual-layer 2D UI color verification.
+* **Immediate Pan-to-Water Transition:** Zero delay after filling the pan—instantly heads to water the moment capacity is reached without idling through scoop cooldowns.
+* **Dynamic Pan Capacity Support:** Seamlessly handles pans with variable or expanding capacities, allowing additional scoops if fill capacity increases.
+* **High-Cadence Water Washing:** Rapid click-panning in water with multi-frame confirmation to instantly return to digging as soon as the pan empties.
 * **Three Movement Modes:**
   * **Vision (Default):** Watches on-screen interaction prompts (`Collect Deposit` vs. `Pan`/`Shake`) to stop at water and dirt automatically.
   * **Mirror:** Stops on the water prompt walking forward (`W`) and matches that exact duration walking back (`S`).
@@ -75,7 +77,7 @@ A Python automation macro for the Roblox game [*Prospecting!*](https://www.roblo
 * **Auto-Sell Routine:** Periodically zooms out, opens the backpack (`~`), clicks your configured Sell Target coordinate, and resumes farming.
 * **Bounds & Keys Page:**
   * Modify `X`, `Y`, `Height`, and `Length` (normalized client ratios `0.0000`–`1.0000`) for all 7 regions (`Dig Target`, `Pan Full`, `Pan Empty`, `Prompt`, `Alert OCR`, `Money OCR`, and `Sell Target`) in one unified tab.
-  * **One-Click Display Scale Presets:** Switch instantly between **Reset 1440p 100% (Default)** and **Load 1440p 150% Preset** buttons (or copy [`prospecting_settings_1440p_150.json`](prospecting_settings_1440p_150.json)).
+  * **One-Click Display Scale Presets:** Switch instantly between **Reset 1440p 100%** and **Load 1440p 150% Preset** buttons (or load [`prospecting_settings_1440p_150.json`](prospecting_settings_1440p_150.json)).
   * **Interactive On-Screen Bounds Editor:** Click **Drag** on any region row, or click **Interactive Bounds Editor (Move / Resize All)** to open a full-client interactive canvas directly over Roblox where you can drag boxes to move them, drag 8-point corner/edge handles to resize them, or click-and-drag to draw new bounding boxes with real-time coordinate feedback.
   * Click **Test** on any individual region (or **Test All Bounds**) to flash a live transparent bounding-box overlay directly over the Roblox window and log real-time detector feedback.
   * Rebind global hotkeys (`Start`, `Pause / Resume`, `Stop`, `Test All Bounds`) via dropdown or one-click key listener.
@@ -127,17 +129,17 @@ python kaeProspect.py
 
 ### 4. Adapting Region Bounds to Other Resolutions & Display Scales
 
-Because Roblox UI elements scale with both resolution and Windows DPI scaling (default calibration is **`2560x1440` at `100%` Windows scale**, with a built-in **`2560x1440` at `150%` Windows scale** preset also provided), you can easily switch presets or tweak the vision bounding boxes on other displays:
+Because Roblox UI elements scale with both resolution and Windows DPI scaling (default calibration is **`2560x1440` at `150%` Windows scale**, with a built-in **`2560x1440` at `100%` Windows scale** preset also provided), you can easily switch presets or tweak the vision bounding boxes on other displays:
 
 1. Open the **Bounds & Keys** tab (the last tab in the HUD).
-   * To switch between the two `2560x1440` calibrations, click **Reset 1440p 100% (Default)** or **Load 1440p 150% Preset** (a standalone [`prospecting_settings_1440p_150.json`](prospecting_settings_1440p_150.json) config is also included in the repository).
+   * To switch between the calibrations, click **Reset 1440p 100%** or **Load 1440p 150% Preset** (a standalone [`prospecting_settings_1440p_150.json`](prospecting_settings_1440p_150.json) config is also included in the repository).
 2. Click **Test** next to any individual region—or press **`F4`** (**Test All Bounds & Save Snapshot**)—while Roblox is open.
    * A live transparent overlay will highlight the bounding box(es) directly over your Roblox window for 2.5 seconds.
    * Live detection results for each tested region are printed to the **Dashboard & Logs** tab, and `debug_vision.png` is saved to the macro folder when testing all bounds.
 3. Inspect the alignment of each region:
    * **Dig Target** *(Green)* — Top green target cap of the spade digging bar.
-   * **Pan Full** *(Yellow)* — Right end of the yellow Pan Fill bar.
-   * **Pan Empty** *(Cyan)* — Left start of the yellow Pan Fill bar.
+   * **Pan Full** *(Yellow)* — Right end of the Pan Fill bar.
+   * **Pan Empty** *(Cyan)* — Left start of the Pan Fill bar.
    * **Prompt** *(Magenta)* — Bottom interaction prompt (`Collect Deposit` / `Pan`).
    * **Alert OCR** *(Red)* — Red warning banner area above the Pan Fill bar.
    * **Money OCR** *(Gold)* — Bottom-right cash balance text.

@@ -3,18 +3,18 @@
     "movement_mode": "Vision",
     "walk_to_water_time": 0.8,
     "walk_to_dirt_time": 0.8,
-    "s_key_trim_ms": 0.0,
-    "dig_hold_max": 1.15,
-    "dig_min_poll_delay": 0.05,
-    "next_dig_wait": 1200,
-    "max_digs_per_cycle": 14,
-    "wash_timeout": 15.0,
-    "autosell_enabled": true,
+    "s_key_trim_ms": -25.0,
+    "dig_hold_max": 0.55,
+    "dig_min_poll_delay": 0.1,
+    "next_dig_wait": 950,
+    "max_digs_per_cycle": 16,
+    "wash_timeout": 10.0,
+    "autosell_enabled": false,
     "autosell_cycles": 5,
     "sell_coords": [
         [
             0.4297,
-            0.5475
+            0.5472
         ]
     ],
     "scroll_out_notches": 1,
@@ -24,46 +24,46 @@
     "webhook_url": "",
     "webhook_interval_min": 5,
     "roi_dig_target": [
-        0.588,
-        0.436,
-        0.608,
-        0.46
+        0.5938,
+        0.4354,
+        0.6024,
+        0.4651
     ],
     "roi_pan_full": [
-        0.592,
-        0.756,
-        0.623,
-        0.788
+        0.6223,
+        0.7556,
+        0.625,
+        0.7883
     ],
     "roi_pan_empty": [
-        0.377,
-        0.756,
-        0.412,
-        0.788
+        0.3766,
+        0.7556,
+        0.3848,
+        0.7883
     ],
     "roi_prompt": [
-        0.435,
-        0.85,
-        0.565,
-        0.884
+        0.4293,
+        0.8455,
+        0.5688,
+        0.8871
     ],
     "roi_alert": [
-        0.38,
-        0.658,
-        0.62,
-        0.692
+        0.35,
+        0.6568,
+        0.6512,
+        0.6917
     ],
     "roi_money": [
-        0.885,
-        0.935,
+        0.8434,
+        0.9339,
         0.995,
-        0.98
+        0.9792
     ],
     "roi_sell_target": [
         0.4047,
-        0.5295,
+        0.529,
         0.4547,
-        0.5655
+        0.5654
     ],
     "hotkey_start": "F1",
     "hotkey_pause": "F2",

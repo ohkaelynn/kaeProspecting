@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+debug_vision.png
+prospecting_settings.json
+prospecting_settings_non_euclidean.json
+kaeProspect_non_euclidean.py
+kaeProspect_non_euclidean_prev_backup.py
+kaeProspect_original*.py
+PROSPECTING_COMPENDIUM.md
+prospecting_database.csv
+prospecting_minerals_and_drops.csv
+examples/
+assets/preview.mp4
+*.log

@@ -64,13 +64,16 @@ except Exception:
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURATION & TELEMETRY
 # ─────────────────────────────────────────────────────────────────────────────
-CONFIG_FILE = "prospecting_settings.json"
+CONFIG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "prospecting_settings.json",
+)
 LOG_QUEUE = queue.Queue()
 ROI_SCHEMA_VERSION = 8
 
 PRESET_BOUNDS_1440P_100 = {
-    "roi_dig_target":  [0.5918, 0.4227, 0.6078, 0.4474],
-    "roi_pan_full":    [0.6020, 0.7778, 0.6247, 0.8141],
+    "roi_dig_target":  [0.5948, 0.4227, 0.6028, 0.4507],
+    "roi_pan_full":    [0.6225, 0.7778, 0.6247, 0.8141],
     "roi_pan_empty":   [0.3754, 0.7778, 0.3977, 0.8141],
     "roi_prompt":      [0.4352, 0.8751, 0.5653, 0.9085],
     "roi_alert":       [0.3805, 0.6747, 0.6200, 0.7081],
@@ -79,13 +82,13 @@ PRESET_BOUNDS_1440P_100 = {
 }
 
 PRESET_BOUNDS_1440P_150 = {
-    "roi_dig_target":  [0.5880, 0.4360, 0.6080, 0.4600],
-    "roi_pan_full":    [0.5920, 0.7560, 0.6230, 0.7880],
-    "roi_pan_empty":   [0.3770, 0.7560, 0.4120, 0.7880],
-    "roi_prompt":      [0.4350, 0.8500, 0.5650, 0.8840],
-    "roi_alert":       [0.3800, 0.6580, 0.6200, 0.6920],
-    "roi_money":       [0.8850, 0.9350, 0.9950, 0.9800],
-    "roi_sell_target": [0.4047, 0.5295, 0.4547, 0.5655],
+    "roi_dig_target":  [0.5938, 0.4354, 0.6024, 0.4651],
+    "roi_pan_full":    [0.6223, 0.7556, 0.6250, 0.7883],
+    "roi_pan_empty":   [0.3766, 0.7556, 0.3848, 0.7883],
+    "roi_prompt":      [0.4293, 0.8455, 0.5688, 0.8871],
+    "roi_alert":       [0.3500, 0.6568, 0.6512, 0.6917],
+    "roi_money":       [0.8434, 0.9339, 0.9950, 0.9792],
+    "roi_sell_target": [0.4047, 0.5290, 0.4547, 0.5654],
 }
 
 DEFAULT_CONFIG = {
@@ -93,22 +96,22 @@ DEFAULT_CONFIG = {
     "movement_mode": "Vision",
     "walk_to_water_time": 0.8,
     "walk_to_dirt_time": 0.8,
-    "s_key_trim_ms": 0.0,
-    "dig_hold_max": 1.150,
-    "dig_min_poll_delay": 0.050,
-    "next_dig_wait": 1200,
-    "max_digs_per_cycle": 14,
-    "wash_timeout": 15.0,
+    "s_key_trim_ms": -25.0,
+    "dig_hold_max": 0.550,
+    "dig_min_poll_delay": 0.100,
+    "next_dig_wait": 950,
+    "max_digs_per_cycle": 16,
+    "wash_timeout": 10.0,
     "autosell_enabled": True,
     "autosell_cycles": 5,
-    "sell_coords": [[0.4711, 0.7026]],
+    "sell_coords": [[0.4297, 0.5472]],
     "scroll_out_notches": 1,
     "scroll_in_notches": 1,
     "always_on_top": False,
     "webhook_enabled": False,
     "webhook_url": "",
     "webhook_interval_min": 5,
-    **PRESET_BOUNDS_1440P_100,
+    **PRESET_BOUNDS_1440P_150,
     "hotkey_start": "F1",
     "hotkey_pause": "F2",
     "hotkey_stop": "F3",
@@ -265,21 +268,7 @@ def load_config() -> dict:
                     round(min(1.0, sx + 0.025), 4),
                     round(min(1.0, sy + 0.018), 4),
                 ]
-            if old_roi_ver < ROI_SCHEMA_VERSION:
-                for k in (
-                    "roi_version",
-                    "roi_dig_target",
-                    "roi_pan_full",
-                    "roi_pan_empty",
-                    "roi_prompt",
-                    "roi_alert",
-                    "roi_money",
-                ):
-                    cfg[k] = DEFAULT_CONFIG[k]
-                if float(cfg.get("dig_hold_max", 0.65)) <= 0.65 or float(cfg.get("dig_hold_max", 0.65)) >= 1.80:
-                    cfg["dig_hold_max"] = DEFAULT_CONFIG["dig_hold_max"]
-                if float(cfg.get("dig_min_poll_delay", 0.08)) >= 0.08:
-                    cfg["dig_min_poll_delay"] = DEFAULT_CONFIG["dig_min_poll_delay"]
+            cfg["roi_version"] = ROI_SCHEMA_VERSION
         except Exception as e:
             print(f"[Config Warning] Failed to parse {CONFIG_FILE}: {e}. Using defaults.")
     return cfg
@@ -590,13 +579,17 @@ def mouse_scroll(notches: int):
         precise_sleep(0.04)
 
 
+def move_mouse_rel(dx: int, dy: int):
+    ii_ = Input_I()
+    ii_.mi = MouseInput(int(dx), int(dy), 0, MOUSEEVENTF_MOVE, 0, 0)
+    inp = Input(0, ii_)
+    user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(inp))
+
+
 def move_mouse_abs(x: int, y: int):
     user32.SetCursorPos(int(x), int(y))
     precise_sleep(0.015)
-    ii_ = Input_I()
-    ii_.mi = MouseInput(1, 1, 0, MOUSEEVENTF_MOVE, 0, 0)
-    inp = Input(0, ii_)
-    user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(inp))
+    move_mouse_rel(1, 1)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -610,6 +603,7 @@ class RobloxClientVision:
         self.client_rect = (0, 0, 1920, 1080)
         self._last_money_poll = 0.0
         self._money_busy = False
+        self._dig_baseline_crop = None
 
     @property
     def sct(self):
@@ -669,53 +663,75 @@ class RobloxClientVision:
         region = {
             "left": max(0, x1),
             "top": max(0, y1),
-            "width": max(8, x2 - x1),
-            "height": max(8, y2 - y1),
+            "width": max(2, x2 - x1),
+            "height": max(4, y2 - y1),
         }
         raw = self.sct.grab(region)
         return np.frombuffer(raw.raw, dtype=np.uint8).reshape(raw.height, raw.width, 4)
 
-    def check_dig_slider_hit(self) -> bool:
+    def capture_dig_baseline(self):
         """
-        Detects the moving white spade marker bar entering the digging minigame target zone.
-        Applies a small downward lead-time extension below the user-drawn green target box and
-        ensures enough horizontal width to capture the bright white shovel handle/blade so LMB
-        releases in time to stop inside the green zone on the very first upward sweep.
+        Snapshots roi_dig_target right after the dark dig bar appears (while the spade slider is
+        still at the bottom of the track) so static background water/sluices and
+        particles behind the bar are subtracted out during polling.
+        """
+        ratios = CONFIG.get("roi_dig_target", DEFAULT_CONFIG["roi_dig_target"])
+        crop = self.grab_roi(ratios)
+        self._dig_baseline_crop = crop.copy() if crop.size > 0 else None
+
+    def clear_dig_baseline(self):
+        self._dig_baseline_crop = None
+
+    def check_dig_slider_hit(self, use_baseline: bool = True) -> bool:
+        """
+        Dual-Layer 2D UI Spade Detector:
+        Inside the dark vertical dig bar track (X=0.5960..0.6027, Y=0.4440..0.4780), 3D world
+        objects behind the bar (water, sluices, and 3D green ribbons) are dimmed
+        by the semi-transparent black bar overlay to G <= 185.
+        Meanwhile, the 2D UI Spade Slider (drawn on top of the bar) has G >= 215, R >= 80, B >= 80,
+        |R - B| <= 35 both when rising in white (BGR=255,255,255) AND when turning Perfect-Green
+        (BGR=91,255,100) inside the target zone, spanning >= 45% of the bar width.
         """
         rx1, ry1, rx2, ry2 = CONFIG.get("roi_dig_target", DEFAULT_CONFIG["roi_dig_target"])
-        mid_x = (rx1 + rx2) * 0.5
-        half_w = max(0.011, (rx2 - rx1) * 0.5)
-        box_h = max(0.015, ry2 - ry1)
-        lead_ratios = (
-            max(0.0, mid_x - half_w),
-            max(0.0, ry1 + box_h * 0.35),
-            min(1.0, mid_x + half_w),
-            min(1.0, ry2 + max(0.011, box_h * 0.45)),
-        )
-        crop = self.grab_roi(lead_ratios)
+        crop = self.grab_roi((rx1, ry1, rx2, ry2))
         if crop.size == 0:
             return False
 
-        b = crop[:, :, 0]
-        g = crop[:, :, 1]
-        r = crop[:, :, 2]
+        b = crop[:, :, 0].astype(np.int16)
+        g = crop[:, :, 1].astype(np.int16)
+        r = crop[:, :, 2].astype(np.int16)
 
-        white_mask = (
-            (r >= 195) & (g >= 195) & (b >= 185) &
-            (np.abs(r.astype(np.int16) - b.astype(np.int16)) <= 45)
+        slider_mask = (
+            (g >= 215) & (r >= 80) & (b >= 80) &
+            (np.abs(r - b) <= 35)
         )
-        row_counts = np.sum(white_mask, axis=1)
-        min_bar_width = max(3, int(crop.shape[1] * 0.05))
+        cnt = int(np.count_nonzero(slider_mask))
+        if cnt < 10:
+            return False
+        row_counts = np.sum(slider_mask, axis=1)
+        min_bar_width = max(3, int(crop.shape[1] * 0.45))
         return bool(np.any(row_counts >= min_bar_width))
 
     def is_pan_full(self) -> bool:
+        """
+        Dynamic Pan Full Detector:
+        Because perfect hits on high-tier shovels increase pan capacity and shrink
+        the yellow completed area back to the left (exposing grey unfilled bar at the right edge),
+        the pan is only considered truly full when >= 65% of the right-cap ROI is yellow AND the
+        rightmost columns are solid yellow (not grey unfilled bar).
+        """
         crop = self.grab_roi(CONFIG.get("roi_pan_full", DEFAULT_CONFIG["roi_pan_full"]))
         if crop.size == 0:
             return False
         bgr = cv2.cvtColor(crop, cv2.COLOR_BGRA2BGR)
         hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
         yellow_mask = cv2.inRange(hsv, (15, 110, 140), (45, 255, 255))
-        return bool(np.sum(yellow_mask > 0) > (crop.shape[0] * crop.shape[1] * 0.10))
+        total_px = float(crop.shape[0] * crop.shape[1])
+        if np.sum(yellow_mask > 0) < (total_px * 0.65):
+            return False
+        # Verify the rightmost column(s) of the ROI are yellow and haven't shrunk back to grey
+        right_cols = yellow_mask[:, max(0, crop.shape[1] - 2):]
+        return bool(np.sum(right_cols > 0) >= (right_cols.size * 0.60))
 
     def is_pan_empty(self) -> bool:
         crop = self.grab_roi(CONFIG.get("roi_pan_empty", DEFAULT_CONFIG["roi_pan_empty"]))
@@ -857,7 +873,7 @@ class RobloxClientVision:
             return f"Sell Target ({w_px}x{h_px}px) -> Middle ({rx:.4f}, {ry:.4f}) | Screen ({tx}, {ty})"
 
         if key == "roi_dig_target":
-            hit = self.check_dig_slider_hit()
+            hit = self.check_dig_slider_hit(use_baseline=False)
             return f"Dig Target ({w_px}x{h_px}px) -> Slider Hit: {hit}"
         if key == "roi_pan_full":
             full = self.is_pan_full()
@@ -1104,12 +1120,12 @@ class ProspectingMacro:
 
     def _wash_and_return_sequence(self, wash_timeout: float, cycles_since_sell: int) -> int:
         if self.vision.is_pan_empty():
-            log_event("[Vision] Pan is already empty (0 sand) — skipping water trip.")
+            log_event("[Vision] Pan is already empty (0 sand) ? skipping water trip.")
             return cycles_since_sell
 
         fwd_duration = self.walk_toward_water()
         extra_nudge = 0.0
-        if not self.sleep_interruptible(0.20):
+        if not self.sleep_interruptible(0.12):
             return cycles_since_sell
 
         set_task("Washing Pan")
@@ -1123,24 +1139,24 @@ class ProspectingMacro:
             click(hold=0.025)
             precise_sleep(0.035)
             elapsed_wash = time.perf_counter() - t_wash
-            if elapsed_wash > 0.65:
+            if elapsed_wash > 0.45:
                 if self.vision.is_pan_empty():
                     empty_confirm_frames += 1
-                    if empty_confirm_frames >= 3:
+                    if empty_confirm_frames >= 2:
                         wash_succeeded = True
-                        log_event("[Vision] Pan confirmed empty! Waiting 0.85s...")
-                        self.sleep_interruptible(0.85)
+                        log_event("[Vision] Pan confirmed empty! Waiting 0.65s...")
+                        self.sleep_interruptible(0.65)
                         break
                 else:
                     empty_confirm_frames = 0
                     alert_now = self.vision.get_alert_banner_state()
                     self._clear_sand_recovery_if_expired(alert_now)
-                    if elapsed_wash > 1.0 and alert_now == "NOT_ENOUGH_SAND":
+                    if elapsed_wash > 0.80 and alert_now == "NOT_ENOUGH_SAND":
                         wash_succeeded = True
                         if self._can_trigger_sand_alert():
                             self._mark_sand_alert_handled()
                             log_event('[OCR Fallback] "Not enough sand!" in water -> Pan is empty.')
-                        self.sleep_interruptible(0.55)
+                        self.sleep_interruptible(0.40)
                         break
                     elif alert_now == "PAN_FULL" and water_nudges < 2:
                         water_nudges += 1
@@ -1160,7 +1176,7 @@ class ProspectingMacro:
         self.vision.poll_money_async(force=True)
 
         self.walk_toward_dirt(forward_elapsed=fwd_duration, extra_nudge=extra_nudge)
-        self.sleep_interruptible(0.22)
+        self.sleep_interruptible(0.20)
 
         post_return_alert = self.vision.get_alert_banner_state()
         self._clear_sand_recovery_if_expired(post_return_alert)
@@ -1200,10 +1216,10 @@ class ProspectingMacro:
                 self.vision.poll_money_async(force=False)
                 WEBHOOK.check_periodic_send()
 
-                max_digs = int(CONFIG.get("max_digs_per_cycle", 14))
-                dig_hold_max = float(CONFIG.get("dig_hold_max", 1.150))
-                min_poll_delay = float(CONFIG.get("dig_min_poll_delay", 0.050))
-                wash_timeout = float(CONFIG.get("wash_timeout", 15.0))
+                max_digs = int(CONFIG.get("max_digs_per_cycle", 16))
+                dig_hold_max = float(CONFIG.get("dig_hold_max", 0.550))
+                min_poll_delay = float(CONFIG.get("dig_min_poll_delay", 0.100))
+                wash_timeout = float(CONFIG.get("wash_timeout", 10.0))
 
                 # 0. Check game alert banners with state/time debounce
                 alert_state = self.vision.get_alert_banner_state()
@@ -1217,14 +1233,13 @@ class ProspectingMacro:
                         self.sleep_interruptible(0.22)
                         continue
 
-                # 1. Check if pan is full
+                # 1. Check if pan is full at startup/recovery before digging
                 pan_empty_now = self.vision.is_pan_empty()
-                pan_full_now = (not pan_empty_now) and (
+                if (not pan_empty_now) and (
                     alert_state == "PAN_FULL"
                     or self.vision.is_pan_full()
                     or dig_count_this_cycle >= max_digs
-                )
-                if pan_full_now:
+                ):
                     if alert_state == "PAN_FULL":
                         log_event('[OCR Fallback] "Your pan is full!" detected -> Moving to water & washing.')
                     else:
@@ -1233,16 +1248,25 @@ class ProspectingMacro:
                     cycles_since_sell = self._wash_and_return_sequence(wash_timeout, cycles_since_sell)
                     continue
 
-                # 2. Hold-and-release spade digging minigame
+                # 2. Hold-and-release spade digging minigame (high-speed polling + baseline)
                 set_task(f"Digging (#{dig_count_this_cycle + 1})")
+                self.vision.clear_dig_baseline()
                 mouse_down()
                 t_dig = time.perf_counter()
                 hit_perfect = False
+                baseline_captured = False
+                baseline_delay = min(0.032, max(0.018, min_poll_delay * 0.45))
 
                 try:
-                    while self.running and not self.paused and (time.perf_counter() - t_dig < dig_hold_max):
-                        if (time.perf_counter() - t_dig) >= min_poll_delay:
-                            if self.vision.check_dig_slider_hit():
+                    while self.running and not self.paused:
+                        elapsed_dig = time.perf_counter() - t_dig
+                        if elapsed_dig >= dig_hold_max:
+                            break
+                        if not baseline_captured and elapsed_dig >= baseline_delay:
+                            self.vision.capture_dig_baseline()
+                            baseline_captured = True
+                        if elapsed_dig >= min_poll_delay:
+                            if self.vision.check_dig_slider_hit(use_baseline=baseline_captured):
                                 hit_perfect = True
                                 break
                         else:
@@ -1251,27 +1275,6 @@ class ProspectingMacro:
                     mouse_up()
 
                 dig_time = round(time.perf_counter() - t_dig, 3)
-
-                if not self.sleep_interruptible(0.18):
-                    continue
-
-                post_dig_alert = self.vision.get_alert_banner_state()
-                self._clear_sand_recovery_if_expired(post_dig_alert)
-                if post_dig_alert == "NOT_ENOUGH_SAND":
-                    if self._can_trigger_sand_alert():
-                        self._mark_sand_alert_handled()
-                        STATS.failsafes += 1
-                        log_event('[OCR Fallback] "Not enough sand!" on scoop -> Walking backward (S) to dirt.')
-                        self.walk_toward_dirt(forward_elapsed=None)
-                        self.sleep_interruptible(0.22)
-                        continue
-                elif post_dig_alert == "PAN_FULL" and not self.vision.is_pan_empty():
-                    log_event('[OCR Fallback] "Your pan is full!" on scoop -> Heading to water.')
-                    dig_count_this_cycle = 0
-                    cycles_since_sell = self._wash_and_return_sequence(wash_timeout, cycles_since_sell)
-                    continue
-
-                self._sand_recovery_active = False
                 dig_count_this_cycle += 1
                 STATS.total_digs += 1
 
@@ -1281,15 +1284,56 @@ class ProspectingMacro:
                 else:
                     log_event(f"[Dig #{dig_count_this_cycle}] Max-hold release ({dig_time:.3f}s).")
 
+                # Settle for scoop animation to deposit sand into pan (~0.32s)
+                if not self.sleep_interruptible(0.32):
+                    continue
+
+                # Check post-dig alerts
+                post_dig_alert = self.vision.get_alert_banner_state()
+                self._clear_sand_recovery_if_expired(post_dig_alert)
+                if post_dig_alert == "NOT_ENOUGH_SAND":
+                    if self._can_trigger_sand_alert():
+                        self._mark_sand_alert_handled()
+                        STATS.failsafes += 1
+                        log_event('[OCR Fallback] "Not enough sand!" on scoop -> Walking backward (S) to dirt.')
+                        self.walk_toward_dirt(forward_elapsed=None)
+                        self.sleep_interruptible(0.20)
+                        continue
+
+                # Immediate post-scoop check: Is pan full now?
+                is_full = False
+                if post_dig_alert == "PAN_FULL":
+                    is_full = True
+                    log_event('[OCR Fallback] "Your pan is full!" on scoop -> Heading to water.')
+                elif dig_count_this_cycle >= max_digs:
+                    is_full = True
+                    log_event(f"[Failsafe] Max digs reached ({dig_count_this_cycle}/{max_digs}) -> Heading to water.")
+                elif self.vision.is_pan_full():
+                    # Quick 80ms confirm to make sure dynamic capacity expansion didn't shrink the bar back
+                    self.sleep_interruptible(0.08)
+                    if self.vision.is_pan_full():
+                        is_full = True
+                        log_event(f"[Vision] Pan full ({dig_count_this_cycle} digs). Moving to water...")
+                    else:
+                        log_event("[Vision] Pan capacity updated & bar shrank -> Taking another scoop!")
+
+                if is_full:
+                    dig_count_this_cycle = 0
+                    cycles_since_sell = self._wash_and_return_sequence(wash_timeout, cycles_since_sell)
+                    continue
+
+                # Pan is not full: wait remainder of scoop animation cooldown before next dig
                 set_task("Dig Cooldown")
-                wait_s = max(0.05, (float(CONFIG.get("next_dig_wait", 1200)) / 1000.0) - 0.18)
-                self.sleep_interruptible(wait_s)
+                next_wait_ms = float(CONFIG.get("next_dig_wait", 950))
+                rem_cooldown = max(0.05, (next_wait_ms / 1000.0) - 0.32)
+                self.sleep_interruptible(rem_cooldown)
 
         except Exception as e:
             log_event(f"[Error] Macro loop exception: {e}")
         finally:
             self.release_all_inputs()
             set_task("Idle")
+
 
     def auto_sell(self, standalone_test: bool = False):
         if standalone_test and not self.vision.focus_without_resizing():
